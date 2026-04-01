@@ -1,0 +1,104 @@
+
+## Concatenar
+
+```{r}
+nombre <- "Alan"
+apellido <- "Kennedy"
+
+print(paste("El nombre completo es: ", nombre, apellido))
+```
+
+## Vectores
+
+### Numericos
+```{r}
+vector <- c(1.3, 2.5, 3.4, 4.743798, 9.941234)
+
+print(vector)
+print(class(vector))
+print(typeof(vector))
+```
+
+### Strings
+```{r}
+
+nombres <- c("Raul", "Pedro", "Juan")
+print(class(nombres))
+print(typeof(nombres))
+```
+
+### Logicos
+```{r}
+logicos <- c(TRUE, TRUE, FALSE, T, F, 0, 1)
+print(logicos)
+print(class(logicos))
+print(typeof(logicos))
+
+
+logicos2 <- c(TRUE, TRUE, FALSE, T, F)
+print(logicos2)
+print(class(logicos2))
+print(typeof(logicos2))
+```
+
+> Los logicos en R se pueden representar con TRUE, FALSE, T, F, 0 y 1. Pero aca se ve que cuando un vector contiene un 0 o 1 
+> para representar false o true, el vector se convierte en tipo numerico.
+
+> En lugar de recurrir a un for, podemos directamente usar el operador matematico
+```{r}
+numeros <- c(1, 2, 3, 4, 5)
+print(numeros * 2)
+```
+
+### Funciones con vectores
+```{r}
+# Longitud del vector, 1-indexado
+length(numeros)
+
+# Sumaremos todos los elementos del vector
+sum(numeros)
+
+# Promedio
+mean(numeros)
+
+# Desvío estándar
+sd(numeros)
+
+# Varianza
+var(numeros)
+
+# Máximo
+max(numeros)
+
+# Mínimo
+min(numeros)
+```
+
+### Acceso a elementos de un vector
+```{r}
+# Acceder al primer elemento
+numeros[1]
+# Acceder al tercer elemento
+numeros[3]
+# Acceder a los elementos del segundo al cuarto
+numeros[2:4]
+# Acceder a todos los elementos excepto el tercero
+numeros[-3]
+# Cambiar el segundo elemento a 10
+numeros[2] <- 10
+print(numeros)  
+```
+
+### Combinar vectores
+```{r}
+otros_numeros <- c(20, 30, 40)
+todos <- c(numeros, otros_numeros)
+print(todos)
+```
+
+### Secuencias y repeticiones
+```{r}
+1:10
+seq(0, 1000, by = 5)
+rep(1, times = 10)
+```

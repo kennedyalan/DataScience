@@ -1,0 +1,303 @@
+---
+title: "R Notebook"
+---
+
+**Introducción a R Studio:**
+
+R Studio es un entorno de desarrollo integrado (IDE) para el lenguaje de programación R. R es un lenguaje y entorno de software para estadísticas y gráficos. R Studio proporciona una interfaz amigable para trabajar con R, facilitando la escritura, depuración y ejecución de código, además de ofrecer herramientas adicionales para la visualización de datos y la generación de informes.
+
+**Beneficios de R Studio:**
+
+Interfaz gráfica amigable: R Studio tiene una interfaz de usuario intuitiva que facilita la escritura y ejecución de código R.
+
+Herramientas integradas: Ofrece herramientas integradas para la visualización de datos, depuración de código, y la creación de informes reproducibles.
+
+Soporte para Shiny: Permite desarrollar aplicaciones interactivas basadas en R con Shiny. Integración con Git: Facilita el control de versiones y colaboración en proyectos. Amplia comunidad y documentación: R Studio es respaldado por una comunidad activa y cuenta con una amplia documentación.
+
+**Diferencias entre R Studio y Python:** Lenguaje de programación: R es un lenguaje especializado en estadísticas y análisis de datos, mientras que Python es un lenguaje generalista con una amplia variedad de aplicaciones.
+
+Ecosistema: R Studio está centrado en análisis de datos y estadísticas, mientras que Python tiene un ecosistema más amplio que abarca desarrollo web, inteligencia artificial, entre otros.
+
+Sintaxis: La sintaxis de R es específica para análisis estadístico, mientras que Python es conocido por su sintaxis clara y legible.
+
+Comunidad: Ambos tienen comunidades activas, pero Python tiende a ser más popular en aplicaciones generales, mientras que R es muy utilizado en estadísticas y ciencias de datos.
+
+**Ahora, procederemos a realizar 10 ejercicios en R Studio, enfocándonos en variables, constantes y condicionales simples.**
+
+**Conceptos Aplicados:** Una variable en programación es un espacio de almacenamiento con un nombre simbólico (un identificador) que se refiere o está asociado a un valor o información almacenada. En R, las variables pueden almacenar diferentes tipos de datos, como números, texto, booleanos, entre otros.
+
+
+```{r}
+print("Hola mundo")
+```
+
+
+
+```{r}
+# Ejercicio 1: Crear una variable llamada 'edad' y asignarle el valor 25
+edad <- 25
+
+# Imprimir el valor de la variable 'edad'
+print(edad)
+```
+
+
+```{r}
+# Ejercicio 2: Crear una constante llamada 'PI' y asignarle el valor 3.1416
+PI <- 3.1416
+
+# Imprimir el valor de la constante 'PI'
+print(PI)
+```
+
+**Operadores Matemáticos en R** Suma: +,  Resta: -,  Multiplicación: \*, División: /, Módulo (Residuo): %%
+
+**Operadores de Comparación en R** Igualdad: == Desigualdad: != Mayor que: \> Menor que: \< Mayor o igual que: \>= Menor o igual que: \<=
+
+**Operadores Lógicos en R** AND Lógico: & o && OR Lógico: \| o \|\| NOT Lógico: !
+
+# Diferencia entre & y && :
+
+
+```{r}
+x <- c(TRUE, FALSE, TRUE)
+y <- c(FALSE, TRUE, TRUE)
+
+# & Compara elemento por elemento 
+x & y
+
+```
+
+
+```{r}
+x <- 15
+if (x > 0 && x < 10) {
+  print("x es positivo y menor que 10")
+} else {
+  print("x es negativo, 0, 10 o mayor que 10")
+}
+```
+
+**Conceptos Aplicados:** Las condicionales simples permiten tomar decisiones en el flujo del programa basadas en una condición. En R, se utiliza la estructura if-else para implementar condicionales.
+
+```{r}
+# Ejercicio 3: Verificar si la edad es mayor o igual a 18
+edad <- 18
+
+if (edad >= 18) {
+  print("Eres mayor de edad")
+} else {
+  print("Eres menor de edad")
+}
+
+```
+
+**Conceptos Aplicados:** Las variables pueden utilizarse en operaciones matemáticas y lógicas en R.
+
+```{r}
+# Ejercicio 4: Calcular el área de un rectángulo
+longitud <- 50
+ancho <- 32
+
+# Calcular el área utilizando las variables
+area <- longitud * ancho
+
+# Imprimir el resultado
+print(paste("El área del rectángulo es:", area, sep=' '))
+
+```
+
+**Conceptos Aplicados:**
+
+Se utilizan operadores lógicos para combinar o modificar condiciones en las expresiones condicionales.
+
+```{r}
+# Ejercicio 5: Verificar si una persona es adulta y tiene menos de 65 años
+edad <- 65
+
+
+if (edad >= 18 && edad < 65) {
+  print("Eres un adulto en edad laboral")
+} else {
+  print("No cumples con las condiciones de edad")
+}
+
+```
+
+Conceptos Aplicados: Las variables pueden ser actualizadas asignándoles nuevos valores en cualquier punto del programa.
+
+```{r}
+# Ejercicio 6: Actualizar la edad de una persona
+edad <- 10
+
+# Imprimir la edad antes de la actualización
+print(paste("Edad antes de la actualización:", edad))
+
+# Actualizar la edad
+edad <- 35
+
+# Imprimir la edad después de la actualización
+print(paste("Edad después de la actualización:", edad))
+
+```
+
+Conceptos Aplicados:
+
+Las condicionales no se limitan a variables numéricas; también pueden aplicarse a strings.
+
+```{r}
+# Ejercicio 7: Verificar si una fruta es una manzana
+fruta <- "banana"
+
+if (fruta == "manzana") {
+  print("Es una manzana")
+} else {
+  print("No es una manzana")
+}
+
+```
+
+Se pueden realizar operaciones con strings, como la concatenación. / TAREA
+
+```{r}
+# Ejercicio 8: Concatenar dos strings
+nombre <- "John"
+apellido <- "Doe"
+
+# Concatenar los strings
+nombre_completo <- paste(nombre, apellido, sep = " ")
+
+# Imprimir el nombre completo
+print(paste("Nombre completo:", nombre_completo))
+
+```
+
+Las variables lógicas (booleanas) se pueden utilizar en expresiones condicionales.
+
+```{r}
+# Ejercicio 9: Verificar si una persona tiene descuento
+tiene_descuento <- TRUE
+
+if (tiene_descuento) {
+  print("Esta persona tiene descuento")
+} else {
+  print("Esta persona no tiene descuento")
+}
+
+```
+
+Operaciones con números decimales y redondeo.
+
+```{r}
+# Ejercicio 10: Calcular el promedio de tres números decimales
+nota1 <- 8.2
+nota2 <- 8.6
+nota3 <- 9.4
+
+
+
+# Calcular el promedio
+promedio <- round((nota1 + nota2 + nota3) / 3 , 2)
+
+# Imprimir el promedio redondeado
+print(paste("El promedio es:", promedio))
+
+```
+
+**¿Qué es un vector?**
+
+Un vector en R es una colección ordenada de elementos del mismo tipo (numérico, carácter, lógico, etc.).
+
+```{r}
+# Vector numérico
+numeros <- c(1, 2, 3, 4, 5)
+
+# Vector de caracteres
+nombres <- c("Ana", "Luis", "María")
+
+# Vector lógico
+respuestas <- c(TRUE, FALSE, TRUE)
+
+```
+
+Vemos el contenido y su clase
+
+```{r}
+# Imprimir contenido
+numeros
+nombres
+respuestas
+
+cat("\n\n")
+
+# Tipo de dato
+class(numeros)
+class(nombres)
+class(respuestas)
+
+```
+
+Operaciones con vectores
+
+```{r}
+# Operaciones matemáticas
+numeros - 10
+numeros * 2
+
+# Comparaciones
+numeros > 3
+
+```
+
+Funciones útiles con vectores
+
+```{r}
+length(numeros)     # Longitud
+sum(numeros)        # Suma
+mean(numeros)       # Promedio
+sd(numeros)         # Desvío estándar
+max(numeros)        # Máximo
+min(numeros)        # Máximo
+
+```
+
+Indexación (acceder a elementos)
+
+```{r}
+# Primer elemento
+numeros[1]
+
+# Elementos del 2 al 4
+numeros[2:4]
+
+# Todos menos el tercero
+numeros[-3]
+
+```
+
+Modificar elementos
+
+```{r}
+# Cambiar el segundo número
+numeros[2] <- 10
+numeros
+
+```
+
+Combinar vectores
+
+```{r}
+otros_numeros <- c(20, 30, 40)
+todos <- c(numeros, otros_numeros)
+todos
+
+```
+
+Secuencias y repeticiones
+
+```{r}
+1:5              # Secuencia del 1 al 5
+seq(0, 10, 2)    # Secuencia de 0 a 10 en pasos de 2
+rep(3, 5)        # Repetir 3 cinco veces
+
+```
