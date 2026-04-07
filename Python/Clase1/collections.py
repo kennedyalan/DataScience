@@ -28,7 +28,7 @@ print(f"Voy a eliminar el 7 de {eliminar}\n")
 eliminar.pop(3)
 print(f"Después de eliminar: {eliminar}\n")
 
-# No se pueden mutar las tuplas
+# No se pueden mutar las tuplas. Hace que sea mas eficiente en memoria y mas rapida para acceder a sus elementos, pero no se pueden modificar después de su creación.
 try:
     tupla[0] = 10  # Esto generará un error
 except TypeError as e:
