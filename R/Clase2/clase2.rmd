@@ -1,0 +1,54 @@
+# Clase 2: Bucles y Condicionales
+
+```{r}
+numero <- readline(prompt = "Ingrese un numero: ")
+as.numeric(numero)
+
+if (numero > 0) {
+  print("El numero es positivo")
+} else if (numero < 0) {
+  print("El numero es negativo")
+} else {
+  print("El numero es cero")
+}
+```
+
+## Ejercicio 2:
+```{r}
+primer_numero <- readline(prompt = "Ingrese el primer numero: ")
+segundo_numero <- readline(prompt = "Ingrese el segundo numero: ")
+if (primer_numero > segundo_numero) {
+  print("El primer numero es mayor que el segundo")
+} else if (primer_numero < segundo_numero) {
+  print("El primer numero es menor que el segundo")
+} else {
+  print("El primer numero es igual que el segundo")
+}
+
+```
+
+## Ejercicio 3
+```{r}
+for (i in 1:5) {
+  print(i)
+}
+```
+
+## Ejercicio 4
+```{r}
+suma <- 0
+for (i in 1:100){
+  suma <- suma+i
+}
+print(suma)
+```
+
+## Ejercicio 5
+```{r}
+suma <- 0
+while (valor >= 0) {
+  valor <- as.numeric(readline("Ingrese un número positivo, si ingresa un negativo el programa se detiene: \n"))
+  suma <- valor + suma
+}
+cat("La suma de los numeros que me diste fue de : ", suma)
+```
