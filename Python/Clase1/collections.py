@@ -68,3 +68,47 @@ print(f"Diferencia: {diferencia} \n")
 # Diferencia simétrica - elementos en a o b pero no en ambos. 
 # Parecido a union pero esta diferencia elimina totalmente el repetido, la union mantiene al elemento que se repite pero solo una vez.
 diferencia_simetrica = conjunto_a ^ conjunto_b
+print(f"Diferencia simétrica: {diferencia_simetrica} \n")
+
+conjunto_c = {3, 1, 2} # Ordena automáticamente los elementos, no mantiene el orden de inserción
+print(f"Conjunto C: {conjunto_c} \n")
+
+conjunto_c.add(4)  # Agregar un elemento al conjunto
+print(f"Conjunto C después de agregar 4: {conjunto_c} \n")
+
+conjunto_c.remove(2)  # Eliminar un elemento del conjunto
+print(f"Conjunto C después de eliminar 2: {conjunto_c} \n")
+      
+conjunto_c.discard(100)  # Eliminar un elemento del conjunto sin generar error si no existe
+print(f"Conjunto C después de intentar eliminar 100: {conjunto_c} \n")
+
+conjunto_c.clear()  # Eliminar todos los elementos del conjunto
+print(f"Conjunto C después de limpiar: {conjunto_c} \n")
+
+# Zip
+nombres = ["Alice", "Bob", "Charlie", "David", "Eve"]  # Lista más larga para mostrar que zip se detiene
+edades = [25, 30, 35, 40]
+
+combinados = zip(nombres, edades)
+print(f"Combinados: {list(combinados)} \n")
+
+# Rangos
+rango1 = range(5)  # Crea un rango de 0 a 4. START, STOP, STEP
+
+list(rango1)  # Convertir el rango a una lista para mostrar sus elementos
+print(f"Rango1: {list(rango1)} \n")
+
+# Tambien de esta otra forma
+print(*range(100))
+
+rango2 = range(10, 30)
+print(f"Rango2: {list(rango2)} \n")
+
+rango3 = range(0, 20, 2)
+print(f"Rango3: {list(rango3)} \n")
+
+rango4 = range(70, 50)
+print(f"Rango4: {list(rango4)} \n")
+
+rango5 = range(70, 50, -1)
+print(f"Rango5: {list(rango5)} \n")
