@@ -39,3 +39,13 @@ if dia_actual in dias:
     indice_dia = dias.index(dia_actual.capitalize())
     dia_futuro = dias[indice_dia + 30 % 7]
 print(f"El día de la semana dentro de 30 días será: {dia_futuro}")
+
+# Excepciones en python
+try:
+    numero = int(input("Ingrese un número: "))
+    resultado = 10 / numero
+    print(f"El resultado de dividir 10 por {numero} es: {resultado}")
+except ZeroDivisionError:
+    print("Error: No se puede dividir por cero.")
+
+print("Aca capturamos el error para que el programa no se detenga")
