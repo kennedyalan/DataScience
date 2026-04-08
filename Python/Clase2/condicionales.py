@@ -34,3 +34,8 @@ for i in range(5):
 dias = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
 
 dia_actual = input("Ingrese el día de la semana actual: ")
+
+if dia_actual in dias:
+    indice_dia = dias.index(dia_actual.capitalize())
+    dia_futuro = dias[indice_dia + 30 % 7]
+print(f"El día de la semana dentro de 30 días será: {dia_futuro}")
