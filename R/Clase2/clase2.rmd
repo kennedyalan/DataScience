@@ -1,4 +1,4 @@
-# Clase 2: Bucles y Condicionales
+# Clase 2
 
 ```{r}
 numero <- readline(prompt = "Ingrese un numero: ")
@@ -14,6 +14,7 @@ if (numero > 0) {
 ```
 
 ## Ejercicio 2:
+
 ```{r}
 primer_numero <- readline(prompt = "Ingrese el primer numero: ")
 segundo_numero <- readline(prompt = "Ingrese el segundo numero: ")
@@ -28,6 +29,7 @@ if (primer_numero > segundo_numero) {
 ```
 
 ## Ejercicio 3
+
 ```{r}
 for (i in 1:5) {
   print(i)
@@ -35,6 +37,7 @@ for (i in 1:5) {
 ```
 
 ## Ejercicio 4
+
 ```{r}
 suma <- 0
 for (i in 1:100){
@@ -43,12 +46,72 @@ for (i in 1:100){
 print(suma)
 ```
 
-## Ejercicio 5
+## Ejercicio 5 y 6
+
+#### El promedio es la division de n valores sumados entre sí
+
+#### Necesitariamos: Saber cuantos valores hubo (una variable contador y luego sumarlos a todos (la suma ya esta solo falta el count y dividirlo por ese count))
+
 ```{r}
 suma <- 0
-while (valor >= 0) {
-  valor <- as.numeric(readline("Ingrese un número positivo, si ingresa un negativo el programa se detiene: \n"))
+contador <- 0
+while(TRUE){
+  valor <- as.numeric(readline("Ingrese un número positivo, cuando ingrese un número negativo el programa se detiene: "))
+  
+  if (valor < 0) {
+    break
+  }
+  contador <- contador + 1
   suma <- valor + suma
+  promedio <- suma / contador
+  
 }
-cat("La suma de los numeros que me diste fue de : ", suma)
+cat("La suma de los numeros positivos fue de: ", suma)
+cat("El promedio de los números positivos fue de: ", promedio)
+```
+
+## Funciones
+
+### Ejercicio 7 y 8
+
+```{r}
+cuadrado <- function(x, invertir = FALSE){
+  resultado <- x^2
+  if(invertir == TRUE){
+    resultado <- -resultado
+  }
+  return(resultado)
+}
+
+cuadrado(10, TRUE)
+```
+
+## Funciones recursivas
+#### Deben tener un caso base de parada
+### Ejercicio 9
+```{r}
+factorial_recursivo <- function(x){
+  if (x <= 1) {
+    return(1)
+  } else {
+    return(x * factorial_recursivo(x-1))
+  }
+}
+
+factorial_recursivo(10)
+```
+
+### Ejercicio 10 (?
+```{r}
+numero1 <- as.numeric(readline("Ingrese un número: "))
+numero2 <- as.numeric(readline("Ingrese otro número: "))
+
+suma <- numero1 + numero2
+if(suma > 0) {
+  print("La suma es positiva")
+} else if (suma < 0) {
+  print("La suma es negativa")
+} else {
+  print("La suma es cero")
+}
 ```

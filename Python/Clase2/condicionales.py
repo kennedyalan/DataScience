@@ -28,3 +28,9 @@ for i in range(5):
     print(lista3)
 
 
+# Ejercicio dia de la semana
+
+# Que dia de la semana sera dentro de 30 dias?
+dias = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
+
+dia_actual = input("Ingrese el día de la semana actual: ")
