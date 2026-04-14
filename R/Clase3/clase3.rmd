@@ -1,0 +1,63 @@
+---
+title: "Manipulacion de datos con n R"
+---
+
+```{r}
+library(dplyr)
+```
+
+# Data sets
+
+## importar data sets
+
+```{r}
+data("airquality")
+airquality
+```
+
+## Breve resumen sobre que se trata este dataset
+
+```{r}
+summary(airquality)
+```
+
+## Filtrar datos
+
+```{r}
+mayo <- airquality[airquality$Month == 5, ]
+mayo
+```
+
+## Agregar columnas a el dataset
+
+```{r}
+airquality$Celsius <- round((airquality$Temp - 32) * 5/9, 2)
+airquality$Celsius
+```
+
+## Crear un nuevo dataset partiendo del dataset original (subconjunto)
+
+\-`x` indica el nombre del data frame al que queremos aplicar el filtro -`select` es un vector indicando los nombres de las columnas que queremos conservar -`subset` es una expresión lógica que indica las filas que queremos conservar
+
+```{r}
+temperatura_mayo <- subset(x = airquality,
+                           select = c(Celsius),
+                           subset = Month == 5)
+# Aca en select, indicamos con el negativo, todas las columnas MENOS month y day
+# En subset, indicamos que queremos conservar las filas que son de mayo
+temperatura_mayo
+```
+
+# Selecciones aleatorias,
+
+> Muy utilizado para crear subcojnutos de training data para nuestro modelo machine learning y test data para evaluar el modelo con datos que nunca vió
+>
+> Se utiliza la palabra reservada sample()
+
+-   `x` vector de donde obtener las muestras
+-   `size` tamaño de la muestra seleccionada
+-   `replace` es un vector lógico que indica si la muestra es con reposición. Si es *FALSE* los elementos pueden ser seleccionados una sola vez. Si es *TRUE* los elementos pueden ser seleccionados repetidas veces.
+
+```{r}
+
+```
