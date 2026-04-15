@@ -1,63 +1,208 @@
 ---
-title: "Manipulacion de datos con n R"
+title: "Manipulación de datos en R"
 ---
 
-```{r}
+```{r setup, include=FALSE}
 library(dplyr)
 ```
 
-# Data sets
+# 1. Data Sets
 
-## importar data sets
+## Importar
 
 ```{r}
 data("airquality")
 airquality
 ```
 
-## Breve resumen sobre que se trata este dataset
+## Métodos útiles
 
 ```{r}
 summary(airquality)
+head(airquality)
+tail(airquality)
+nrow(airquality)
+ncol(airquality)
+colnames(airquality)
+str(airquality)
 ```
 
-## Filtrar datos
+## Filtrar filas
 
 ```{r}
 mayo <- airquality[airquality$Month == 5, ]
 mayo
 ```
 
-## Agregar columnas a el dataset
+## Agregar columnas
 
 ```{r}
 airquality$Celsius <- round((airquality$Temp - 32) * 5/9, 2)
 airquality$Celsius
 ```
 
-## Crear un nuevo dataset partiendo del dataset original (subconjunto)
+## Crear subconjunto con `subset()`
 
-\-`x` indica el nombre del data frame al que queremos aplicar el filtro -`select` es un vector indicando los nombres de las columnas que queremos conservar -`subset` es una expresión lógica que indica las filas que queremos conservar
+-   `x` — data frame de origen
+-   `select` — columnas a conservar
+-   `subset` — condición lógica para filtrar filas
 
 ```{r}
 temperatura_mayo <- subset(x = airquality,
                            select = c(Celsius),
                            subset = Month == 5)
-# Aca en select, indicamos con el negativo, todas las columnas MENOS month y day
-# En subset, indicamos que queremos conservar las filas que son de mayo
 temperatura_mayo
 ```
 
-# Selecciones aleatorias,
+------------------------------------------------------------------------
 
-> Muy utilizado para crear subcojnutos de training data para nuestro modelo machine learning y test data para evaluar el modelo con datos que nunca vió
->
-> Se utiliza la palabra reservada sample()
+# 2. Selecciones Aleatorias (Train / Test Split)
 
--   `x` vector de donde obtener las muestras
--   `size` tamaño de la muestra seleccionada
--   `replace` es un vector lógico que indica si la muestra es con reposición. Si es *FALSE* los elementos pueden ser seleccionados una sola vez. Si es *TRUE* los elementos pueden ser seleccionados repetidas veces.
+> Muy utilizado para crear subconjuntos de *training data* para el modelo y *test data* para evaluarlo con datos que nunca vio.
+
+Parámetros de `sample()`:
+
+-   `x` — vector de donde obtener las muestras
+-   `size` — tamaño de la muestra
+-   `replace` — `FALSE`: sin reposición (cada elemento se elige una sola vez); `TRUE`: con reposición (se repite o no)
 
 ```{r}
+datos_limpios <- na.omit(airquality) # Omitir nulos o NA
+cantidad_filas <- nrow(datos_limpios) # Obtener cantidad filas finales sin NA
 
+# Sacar muestra del 50% con esa cantidad limpia de filas
+muestra <- sample(x = 1:cantidad_filas,
+                  size = cantidad_filas * 0.5,
+                  replace = FALSE)
+
+training_data <- datos_limpios[muestra, ]
+training_data
+```
+
+```{r}
+# No hace falta sacar una muestra nueva, tomamos el complemento de la primer muestra (training)
+test_data <- airquality[-muestra, ]
+test_data
+```
+
+## Filtrado lógico con rbinom
+Esto es probabilístico
+```{r}
+filtrado <- rbinom(n = nrow(airquality), size = 1, prob = 0.5)
+filtrado
+```
+
+------------------------------------------------------------------------
+
+# 3. Ordenar con `order()`
+
+-   `decreasing = TRUE` — de mayor a menor
+-   `na.last = TRUE` — los `NA` van al final
+
+```{r}
+datos_ordenados <- subset(
+  datos_limpios[order(x = datos_limpios$Celsius, decreasing = TRUE, na.last = TRUE), ],
+  select = c(Celsius, Month, Day)
+)
+datos_ordenados
+```
+
+Generé un subconjunto a partir de los datos limpios del anterior, los ordené por grados celsius y seleccioné solo grados celsios, mes y día
+
+------------------------------------------------------------------------
+
+# 4. Agrupar con `aggregate()`
+
+```{r}
+temperaturas_maximas <- aggregate(x = datos_limpios$Celsius,
+                                  by = list(datos_limpios$Month),
+                                  FUN = max)
+temperaturas_maximas
+```
+
+```{r}
+temperaturas_maximas2 <- aggregate(Celsius ~ Month, data = datos_limpios, FUN = max)
+temperaturas_maximas2
+```
+
+
+## Función ave
+```{r}
+
+```
+------------------------------------------------------------------------
+
+# 5. Función `apply()`
+
+-   `X` — matriz o data frame
+-   `MARGIN` — `1` para aplicar por filas, `2` por columnas
+-   `FUN` — función a aplicar
+
+```{r}
+temperatura_media <- apply(datos_limpios, MARGIN = 1, FUN = mean)
+temperatura_media
+```
+
+------------------------------------------------------------------------
+
+# 6. One-Hot Encoding (Variables Categóricas)
+
+Convierte una variable categórica en columnas binarias (dummies).
+
+```{r}
+datos_limpios$Month <- factor(datos_limpios$Month)
+
+month_one <- model.matrix(~ Month - 1, data = datos_limpios)
+head(month_one, 40)
+```
+
+## Unir al dataset con `cbind()`
+
+```{r}
+datos_limpios <- cbind(datos_limpios, month_one)
+datos_limpios$Month <- NULL
+```
+
+------------------------------------------------------------------------
+
+# 7. Normalización
+
+## Estandarización (Z-score)
+*Mejor cuando ya teníamos valores negativos y positivos*
+
+Fórmula: `(x - media) / desviación estándar`
+
+```{r}
+datos_limpios$Celsius_estandarizado <- (datos_limpios$Celsius - mean(datos_limpios$Celsius)) / sd(datos_limpios$Celsius)
+
+datos_limpios$Viento_estandarizado <- (datos_limpios$Wind - mean(datos_limpios$Wind)) / sd(datos_limpios$Wind)
+
+head(datos_limpios[, c("Celsius", "Celsius_estandarizado", "Wind", "Viento_estandarizado")])
+```
+
+## Escalado Min-Max
+*Mejor cuando ya teníamos solamente valores positivos*
+Fórmula: `(x - min) / (max - min)` → resultado entre 0 y 1
+
+```{r}
+minimo <- min(datos_limpios$Celsius)
+maximo <- max(datos_limpios$Celsius)
+datos_limpios$Celsius_escalado <- (datos_limpios$Celsius - minimo) / (maximo - minimo)
+
+head(datos_limpios[, c("Celsius", "Celsius_escalado")])
+```
+# Tarea: Crear una función para estandarizar y otra para escalar
+```{r}
+estandarizar <- function(x) {
+  return ((x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE))
+}
+
+escalar <- function(x) {
+  minimo <- min(x, na.rm = TRUE)
+  maximo <- max(x, na.rm = TRUE)
+  return ((x - minimo) / (maximo - minimo))
+}
+
+print(round(estandarizar(datos_limpios$Celsius), digits = 4))
+print(round(escalar(datos_limpios$Celsius), digits = 4))
 ```
