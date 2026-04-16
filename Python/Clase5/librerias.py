@@ -1,5 +1,5 @@
 # Numpy
-import numpy as np
+import Python.Clase5.librerias as np
 ## Practica comun definir numpy as np
 
 # Arrays vs listas de python
@@ -31,3 +31,14 @@ print(array_dimensiones[2][3]) # tercer fila, cuarta columna (otra forma de acce
 
 ## Forma del array
 array_dimensiones.shape # Devuelve una *tupla* con el numero de filas y columnas del array
+
+
+## Eje x
+np.linspace(0, 100, 13)
+# Sirve para construir un eje x ya que esto genera 13 puntos equidistantes entre 0 y 100, incluyendo ambos extremos.
+
+array_ejemplo = np.array([[[3, 6, 9], [12, 15, 18]], [[21, 24, 27], [30, 33, 36]], [[39, 42, 45], [48, 51, 54]]])
+
+print(array_ejemplo.shape) # Devuelve (3, 2, 3) lo que significa que el array tiene 3 bloques, cada bloque tiene 2 filas y cada fila tiene 3 columnas.
+print(array_ejemplo.ndim)
+print(array_ejemplo.size) # Devuelve el numero total de elementos en el array, que es 18 (3 bloques x 2 filas x 3 columnas = 18 elementos)
