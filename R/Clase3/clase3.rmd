@@ -127,9 +127,35 @@ temperaturas_maximas2
 
 
 ## Función ave
+-   `X` - vector a agrupar
+-   `...` - vector de factores que agrupan
+-   `FUN` - función a aplicar a cada grupo
+### Es como aggregate pero devuelve un vector del mismo largo que el original, con el resultado de la función aplicada a cada grupo. Basicamente agrega una nueva columna al dataset original.
 ```{r}
-
+airquality$maximo <- ave(x = airquality$Temp, as.numeric(airquality$Month), FUN = max)
+airquality
 ```
+------------------------------------------------------------------------
+
+# 4.5 Variables condicionales con `ifelse()`
+
+`ifelse(condición, valor_si_verdadero, valor_si_falso)` — evalúa una condición para cada elemento y devuelve un valor según el resultado.
+
+```{r}
+temperatura_media_global <- mean(airquality$Temp, na.rm = TRUE)
+
+airquality$temperatura_alta <- ifelse(airquality$Temp > temperatura-media_global, 1, 0)
+```
+
+## Combinado con `ave()` — comparar contra la media de un grupo
+
+```{r}
+media_mes <- ave(x = airquality$Temp, as.numeric(airquality$Month), FUN = mean)
+airquality$temperatura_alta_mes <- ifelse(airquality$Temp > media_mes, 1, 0)
+# Acá en este caso usamos ave y no aggregate porque necesitamos saber la media para todas las filas, no solo una por mes. Si usáramos aggregate, nos devolvería un dataframe con la media de cada mes pero no podríamos comparar cada fila contra la media de su mes.
+# Lo que queremos lograr aca es, ver si un dia hubo una temperatura mayor a la media de todo el mes y ahi definir que ese dia hizo calor.
+```
+
 ------------------------------------------------------------------------
 
 # 5. Función `apply()`
@@ -143,6 +169,47 @@ temperatura_media <- apply(datos_limpios, MARGIN = 1, FUN = mean)
 temperatura_media
 ```
 
+## Función `lapply()`
+### Recibe una lista y devuelve una lista.
+```{r}
+l <- list(a = 1:10, b = 11:20)
+lapply(l, mean)
+lapply(l, sum)
+```
+
+## Función `sapply()`
+### Recibe una lista pero devuelve un vector común.
+```{r}
+s <- list(a = 1:10, b = 11:20)
+sapply(s, mean)
+```
+
+## Función `tapply()`
+### Aplica funciones sobre grupos (como aggregate) pero este retorna una matriz o vector
+```{r}
+tapply(airquality$Temp, airquality$Month, mean)
+```
+
+### Muy útil para agrupar con dos variables:
+```{r}
+ventas <- data.frame(
+    vendedor = c("Ana", "Ana", "Ana", "Bob", "Bob", "Bob"),
+    region   = c("Norte", "Sur", "Norte", "Sur", "Norte", "Sur"),
+    monto    = c(100, 200, 150, 300, 250, 400)
+  )
+
+tapply(X = ventas$monto, INDEX = list(ventas$vendedor, ventas$region), FUN = sum)
+```
+Esto produce una matriz mes x día con la temperatura media de cada día de cada mes. Es decir, el resultado es una tabla de doble entrada donde las filas representan los meses y las columnas representan los días, y cada celda contiene la temperatura media correspondiente a ese mes y día específico.
+
+## Función `mapply()`
+### Aplica una función a múltiples argumentos de forma paralela.
+```{r}
+
+mapply(function(x, y) x + y,
+       x = 1:5,
+       y = 6:10)
+```
 ------------------------------------------------------------------------
 
 # 6. One-Hot Encoding (Variables Categóricas)
@@ -164,8 +231,26 @@ datos_limpios$Month <- NULL
 ```
 
 ------------------------------------------------------------------------
+# 7. Discretizar variables continuas con `cut()`
 
-# 7. Normalización
+Convierte una variable numérica continua en categorías (bins).
+
+-   `x` — vector numérico a discretizar
+-   `breaks` — vector de puntos de corte, o un número indicando cuántos bins de igual ancho crear
+-   `labels` — nombres para cada bin. Si es `FALSE` asigna números
+-   `include.lowest` — si el valor mínimo se incluye en el primer bin o no
+-   `right` — si `TRUE` los intervalos cierran a la derecha `(0,15]`; si `FALSE` cierran a la izquierda `[0,15)`
+
+```{r}
+datos_limpios$temp_categoria <- cut(x = datos_limpios$Celsius,
+                                     breaks = c(0, 15, 25, 40),
+                                     labels = c("Fría", "Templada", "Calurosa"),
+                                     include.lowest = TRUE)
+
+head(datos_limpios[, c("Celsius", "temp_categoria")])
+```
+------------------------------------------------------------------------
+# 8. Normalización
 
 ## Estandarización (Z-score)
 *Mejor cuando ya teníamos valores negativos y positivos*
