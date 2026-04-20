@@ -102,3 +102,38 @@ array_axis = np.array([[1, 2, 3],
 print(f"Array original: \n{array_axis}")
 print(f"Suma por columnas (axis=0): \n{array_axis.sum(axis=0)}")
 print(f"Suma por filas (axis=1): \n {array_axis.sum(axis=1)})")
+
+print(salto_de_linea(" Broadcasting "))
+# Broadcasting: permite realizar operaciones entre arrays de diferentes formas y tamaños.
+# Adapta automaticamente las dimensiones para que puedan operar.
+data = np.array([1.5, 2.3, 3.7])
+print(f"Data original: \n{data}")
+print(f"Data * 1.6: \n{data * 1.6}")
+
+print(salto_de_linea(" Producto punto "))
+punto1 = np.array([1, 2, 3])
+punto2 = np.array([3, 2, 1])
+
+print(punto1.dot(punto2))  # Producto punto: 1*3 + 2*2 + 3*1 = 10
+
+print(salto_de_linea(" Producto matricial "))
+matriz1 = np.array([[1,2],
+                    [3,4],
+                    [5,6]])
+
+matriz2 = np.array([[1,2,3],
+                    [3,4,5]])
+print(f"Matriz 1: \n{matriz1}")
+print(f"Matriz 2: \n{matriz2}")
+print(f"Producto matricial: \n{matriz1 @ matriz2}")
+
+print(salto_de_linea(" Matriz de temperaturas y filtrado con NumPy "))
+# Generá una **matriz 30×30** de temperaturas aleatorias entre **0 °C y 50 °C** usando NumPy.
+# Luego, filtrá las temperaturas:
+# - menores a **5 °C**
+# - o mayores a **35 °C**
+temperaturas = np.random.uniform(0, 50, (30, 30))
+print(f"Matriz de temperaturas: \n{temperaturas}")
+
+temperaturas_filtradas = np.round(temperaturas[(temperaturas < 5) | (temperaturas > 35)]).astype(int)
+print(f"Temperaturas filtradas (menores a 5 °C o mayores a 35 °C): \n{temperaturas_filtradas}")
