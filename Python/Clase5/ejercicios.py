@@ -30,3 +30,23 @@ arreglo = np.array([1, 2, 3, 4, 5])
 
 resultado = (arreglo + 10) * 2
 print(f"Resultado: \n{resultado}")
+
+print(salto_de_linea(" Ejercicio - 1.61 "))
+# Genera un arreglo de 3x3 con números del 1 al 9. Calcula la suma de cada fila y de cada columna.
+matriz_3 = np.array([[1, 2, 3],
+                    [4, 5, 6],
+                    [7, 8, 9]])
+
+suma_columnas = np.sum(matriz_3, axis=0)
+suma_filas = np.sum(matriz_3, axis=1)
+print(f"Suma de columnas: \n{suma_columnas}")
+print(f"Suma de filas: \n{suma_filas}")
+
+print(salto_de_linea(" Ejercicio - 1.62 "))
+
+arreglo100 = np.random.random(100)
+print(f"Arreglo de 100 números aleatorios entre 0 y 1: \n{arreglo100}")
+media = np.mean(arreglo100)
+print(f"Media del arreglo: {media}")
+desvio_estandar = np.std(arreglo100)
+print(f"Desvío estándar del arreglo: {desvio_estandar}")
