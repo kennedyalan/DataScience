@@ -43,10 +43,37 @@ print(f"Suma de columnas: \n{suma_columnas}")
 print(f"Suma de filas: \n{suma_filas}")
 
 print(salto_de_linea(" Ejercicio - 1.62 "))
-
+# Crea un arreglo de 100 números aleatorios entre 0 y 1. Calcula la media y la desviación estándar.
 arreglo100 = np.random.random(100)
 print(f"Arreglo de 100 números aleatorios entre 0 y 1: \n{arreglo100}")
 media = np.mean(arreglo100)
 print(f"Media del arreglo: {media}")
 desvio_estandar = np.std(arreglo100)
 print(f"Desvío estándar del arreglo: {desvio_estandar}")
+
+print(salto_de_linea(" Ejercicio - 1.63 "))
+# Dado un arreglo de 4x4, extrae los elementos de la segunda fila y la tercera columna.
+matriz_4 = np.random.randint(0, 10, (4, 4))
+print(f"Matriz de 4x4: \n{matriz_4}")
+segunda_fila = matriz_4[1, :]
+tercera_columna = matriz_4[:, 2]
+
+print(f"Elementos de la segunda fila: \n{segunda_fila}")
+print(f"Elementos de la tercera columna: \n{tercera_columna}")
+
+print(salto_de_linea(" Ejercicio - 1.64 "))
+# Resuelve el sistema de ecuaciones:
+# 2x + y = 5
+# x - y = 1
+
+coeficientes = np.array([[2, 1], [1, -1]])
+independientes = np.array([5, 1])
+
+solucion = np.linalg.solve(coeficientes, independientes).astype(int)
+print(f"Solución del sistema de ecuaciones: \n{solucion}")
+
+print(salto_de_linea(" Ejercicio - 1.65 "))
+matriz_5 = np.random.randint(0, 25, (5 , 5))
+print(f"Matriz de 5x5: \n{matriz_5}")
+matriz_5[[0, -1]] = matriz_5[[-1, 0]]
+print(f"Matriz después de intercambiar la primera y última fila: \n{matriz_5}")
