@@ -94,3 +94,13 @@ secuencia = np.array([10, 20, 30, 40])
 ones = np.ones((4, 1))
 matriz_broadcast = (ones * secuencia).astype(int)
 print(f"Matriz de 4x4 con broadcasting: \n{matriz_broadcast}")
+
+print(salto_de_linea(" Ejercicio - 1.68 "))
+# 1.68: Crea un arreglo de 5x5 con números aleatorios y encuentra los índices (fila, columna) de su valor máximo.
+
+matriz_5x5 = np.random.randint(0, 100, (5, 5))
+print(f"Matriz de 5x5: \n{matriz_5x5}")
+maximo = np.max(matriz_5x5)
+indices_maximo = np.where(matriz_5x5 == maximo)
+print(f"Valor máximo: {maximo}")
+print(f"Índices del valor máximo (fila, columna): \n{indices_maximo}")
