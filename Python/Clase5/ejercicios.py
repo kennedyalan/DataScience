@@ -115,8 +115,17 @@ print(f"Media del arreglo: {mean}")
 print(f"Números mayores que la media: {cont}")
 
 print(salto_de_linea(" Ejercicio - 1.70 "))
-
+# Crea una matriz de 8x8 que represente un tablero de ajedrez (0 y 1 alternados) usando slicing con pasos.
 ajedrez = np.zeros((8 ,8))
 ajedrez[0::2, 1::2] = 1
 ajedrez[1::2, 0::2] = 1
-print(f"Matriz de ajedrez 8x8: \n{ajedrez.astype(int)}") 
+print(f"Matriz de ajedrez 8x8: \n{ajedrez.astype(int)}")
+
+print(salto_de_linea(" Ejercicio - 1.71 "))
+# Crea dos arreglos de 10 números aleatorios y encuentra los valores que están presentes en ambos (intersección).
+arreglo_01 = np.random.randint(0, 10, 10)
+arreglo_02 = np.random.randint(0, 10, 10)
+interseccion = np.intersect1d(arreglo_01, arreglo_02)
+print(f"Arreglo 1: \n{arreglo_01}")
+print(f"Arreglo 2: \n{arreglo_02}")
+print(f"Intersección de ambos arreglos: \n{interseccion}")
