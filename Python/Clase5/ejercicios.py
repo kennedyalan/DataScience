@@ -77,3 +77,12 @@ matriz_5 = np.random.randint(0, 25, (5 , 5))
 print(f"Matriz de 5x5: \n{matriz_5}")
 matriz_5[[0, -1]] = matriz_5[[-1, 0]]
 print(f"Matriz después de intercambiar la primera y última fila: \n{matriz_5}")
+
+print(salto_de_linea(" Ejercicio - 1.66 "))
+arreglo20 = np.random.randint(0, 100, 20)
+arreglo20.sort()
+print(f"Arreglo de 20 números aleatorios entre 0 y 100: {arreglo20}")
+
+arreglo20[arreglo20 % 3 == 0] = 999
+print(f"Arreglo de 20 números aleatorios entre 0 y 100: {arreglo20}")
+
