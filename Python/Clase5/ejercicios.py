@@ -73,12 +73,14 @@ solucion = np.linalg.solve(coeficientes, independientes).astype(int)
 print(f"Solución del sistema de ecuaciones: \n{solucion}")
 
 print(salto_de_linea(" Ejercicio - 1.65 "))
+# Crea una matriz de 5x5 con valores del 0 al 24 e intercambia la primera fila con la última fila de forma eficiente.
 matriz_5 = np.random.randint(0, 25, (5 , 5))
 print(f"Matriz de 5x5: \n{matriz_5}")
 matriz_5[[0, -1]] = matriz_5[[-1, 0]]
 print(f"Matriz después de intercambiar la primera y última fila: \n{matriz_5}")
 
 print(salto_de_linea(" Ejercicio - 1.66 "))
+# Genera un arreglo de 20 números enteros aleatorios (1-100) y sustituye todos los múltiplos de 3 por el valor 999.
 arreglo20 = np.random.randint(0, 100, 20)
 arreglo20.sort()
 print(f"Arreglo de 20 números aleatorios entre 0 y 100: {arreglo20}")
@@ -86,3 +88,9 @@ print(f"Arreglo de 20 números aleatorios entre 0 y 100: {arreglo20}")
 arreglo20[arreglo20 % 3 == 0] = 999
 print(f"Arreglo de 20 números aleatorios entre 0 y 100: {arreglo20}")
 
+print(salto_de_linea(" Ejercicio - 1.67 "))
+# Utiliza broadcasting para crear una matriz de 4x4 donde cada fila sea la secuencia [10, 20, 30, 40].
+secuencia = np.array([10, 20, 30, 40])
+ones = np.ones((4, 1))
+matriz_broadcast = (ones * secuencia).astype(int)
+print(f"Matriz de 4x4 con broadcasting: \n{matriz_broadcast}")
