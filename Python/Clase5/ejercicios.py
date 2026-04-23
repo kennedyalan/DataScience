@@ -74,7 +74,7 @@ print(f"Solución del sistema de ecuaciones: \n{solucion}")
 
 print(salto_de_linea(" Ejercicio - 1.65 "))
 # Crea una matriz de 5x5 con valores del 0 al 24 e intercambia la primera fila con la última fila de forma eficiente.
-matriz_5 = np.random.randint(0, 25, (5 , 5))
+matriz_5 = np.arange(25).reshape(5, 5)
 print(f"Matriz de 5x5: \n{matriz_5}")
 matriz_5[[0, -1]] = matriz_5[[-1, 0]]
 print(f"Matriz después de intercambiar la primera y última fila: \n{matriz_5}")
