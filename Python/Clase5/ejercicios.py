@@ -96,7 +96,7 @@ matriz_broadcast = (ones * secuencia).astype(int)
 print(f"Matriz de 4x4 con broadcasting: \n{matriz_broadcast}")
 
 print(salto_de_linea(" Ejercicio - 1.68 "))
-# 1.68: Crea un arreglo de 5x5 con números aleatorios y encuentra los índices (fila, columna) de su valor máximo.
+# Crea un arreglo de 5x5 con números aleatorios y encuentra los índices (fila, columna) de su valor máximo.
 
 matriz_5x5 = np.random.randint(0, 100, (5, 5))
 print(f"Matriz de 5x5: \n{matriz_5x5}")
@@ -106,9 +106,17 @@ print(f"Valor máximo: {maximo}")
 print(f"Índices del valor máximo (fila, columna): \n{indices_maximo}")
 
 print(salto_de_linea(" Ejercicio - 1.69 "))
+# Genera 15 números aleatorios y cuenta cuántos de ellos son superiores al promedio del arreglo.
 arreglo_15 = np.random.randint(0, 100, 15)
 mean = np.mean(arreglo_15).astype(int)
 cont = np.sum(arreglo_15 > mean)
 print(f"Arreglo de 15 números aleatorios entre 0 y 100: \n{arreglo_15}")
 print(f"Media del arreglo: {mean}")
 print(f"Números mayores que la media: {cont}")
+
+print(salto_de_linea(" Ejercicio - 1.70 "))
+
+ajedrez = np.zeros((8 ,8))
+ajedrez[0::2, 1::2] = 1
+ajedrez[1::2, 0::2] = 1
+print(f"Matriz de ajedrez 8x8: \n{ajedrez.astype(int)}") 
