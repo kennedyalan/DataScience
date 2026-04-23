@@ -129,3 +129,11 @@ interseccion = np.intersect1d(arreglo_01, arreglo_02)
 print(f"Arreglo 1: \n{arreglo_01}")
 print(f"Arreglo 2: \n{arreglo_02}")
 print(f"Intersección de ambos arreglos: \n{interseccion}")
+
+print(salto_de_linea(" Ejercicio - 1.72 "))
+# Crea una matriz de 3x3 y réstale a cada elemento la media de su fila correspondiente (normalización por fila).
+matriz_3x3 = np.random.randint(0, 100, (3, 3))
+print(f"Matriz de 3x3: \n{matriz_3x3}")
+media_fila = np.mean(matriz_3x3, axis=1, keepdims=True).round(2)
+matriz_normalizada = matriz_3x3 - media_fila
+print(f"Matriz normalizada por fila: \n{matriz_normalizada}")
