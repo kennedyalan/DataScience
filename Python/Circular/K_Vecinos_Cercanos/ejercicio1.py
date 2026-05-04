@@ -59,14 +59,14 @@ datos_train, datos_test, clase_train, clase_test = train_test_split(
     datos, clase, test_size=0.3, random_state=1, stratify=clase)
 
 for k in [3, 5]:
-    clasiffier = KNeighborsClassifier(n_neighbors=k)
-    clasiffier.fit(datos_train, clase_train)
-    predicciones_test = clasiffier.predict(datos_test)
+    classifier = KNeighborsClassifier(n_neighbors=k)
+    classifier.fit(datos_train, clase_train)
+    predicciones_test = classifier.predict(datos_test)
 
     accuracy = accuracy_score(clase_test, predicciones_test)
     print(f'Accuracy para K={k}: {accuracy:.2f}')
     cm = confusion_matrix(clase_test, predicciones_test)
-    display = ConfusionMatrixDisplay(cm, display_labels=clasiffier.classes_)
+    display = ConfusionMatrixDisplay(cm, display_labels=classifier.classes_)
     display.plot()
     plt.title(f'Matriz de Confusión para K={k}')
     plt.show()
