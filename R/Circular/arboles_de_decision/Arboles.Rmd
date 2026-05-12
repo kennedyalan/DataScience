@@ -1,0 +1,417 @@
+---
+title: "Arboles"
+output: html_notebook
+---
+
+Vamos a trabajar con un conjunto de datos de una cartera de clientes e un banco.
+
+Los datos están relacionados con campañas de marketing directo de una institución bancaria portuguesa. Las campañas de marketing se basaron en llamadas telefónicas. A menudo, se requería más de un contacto con el mismo cliente, para poder acceder a si el producto estaría suscrito. El objetivo de la clasificación es predecir si el cliente suscribirá un depósito a plazo.
+
+```{r}
+library(liver)
+library(ggplot2)
+data("bank")
+
+```
+
+# Análisis descriptivo
+
+Siempre que vamos a trabajar con un conjunto de datos es importante como primer paso realizar un análisis exploratorio.
+```{r}
+summary(bank)
+head(bank)
+str(bank)
+ggplot(bank, aes(x = age)) + geom_histogram(bins = 30, fill = "steelblue", color = "white")
+ggplot(bank, aes(x = job, y = age)) + geom_boxplot()
+```
+
+# Preprocesamiento de los datos
+
+Una vez tomado un conocimiento de los datos que componen el dataset y la relaciones que existen entre sus variables el paso siguiente sería realizar una serie de transformaciones con el objetivo de obtener una mejor predicción.
+
+-   Limpieza de valores
+-   Creación de nuevas variables
+-   Transformación
+
+# Distribución de la varaible objetivo
+
+Queremos saber cuantos casos hay en el conjunto de datos con clientes que fueron contactados y suscribieron a un depósito.
+
+```{r}
+table(bank$deposit)
+```
+
+# Particionar el conjunto de datos
+
+Debemos dividir al conjunto de datos en dos. Con una parte (training) vamos a entrenar el modelo y obtener ciertos patrones que definen a los clientes con más chances de suscribir. La otra parte (testing) vamos a utilizarla para validar la veracidad de estos patrones o si estos son producto del azar o la casualidad.
+
+Vamos a seleccionar un 70% para entrenar y un 30% para testear.
+
+```{r}
+seleccionTest <- runif(n=nrow(bank))
+
+bank_test <- bank[seleccionTest >.7 ,]
+bank_tr <- bank[seleccionTest <= .7 ,] #Conjunto de entrenamiento sin balancear
+```
+
+Observamos comno quedaron distribuidas las varaibles objetivos en el training y testing.
+
+```{r}
+table(bank_tr$deposit)
+table(bank_test$deposit)
+```
+
+# Balancear el training
+
+Cuando observamos que hay una diferencia grande entre las respuestas que toma la variable objetivo, se dice que el conjunto de datos está desbalanceado.
+
+En estos casos y para algunos modelos, pueden obtenerse mejores resultados se trabajamos con datos balanceados.
+
+Hay 3 estrategias posibles:
+
+1. Dejar todo como está 
+2. Aumentar la cantidad de deposit=="yes" 
+3. Disminuir los casos con deposit=="no" 
+
+
+# 2 Si aumentamos los casos con deposit == "yes":
+
+```{r}
+tabla<-table(bank_tr$deposit)
+muestra <- sample(which(bank_tr$deposit=="yes"),
+                  size= (tabla[1]-tabla[2]), replace=TRUE)
+bank_tr_ <-  rbind(bank_tr, bank_tr[muestra,]) 
+table(bank_tr_$deposit)
+```
+
+# 3 Si disminuimos Los casos con deposit == "no"
+
+```{r}
+tabla<-table(bank_tr$deposit)
+
+no <- which(bank_tr$deposit=="no")
+eliminacion <- sample(x=no, size = tabla[1]-tabla[2], 
+                      replace = F)
+bank_tr__ <- bank_tr[- eliminacion,]
+table(bank_tr__$deposit)
+```
+
+# Creamos el árbol
+
+### Trabajar con un subconjunto de variables
+
+```{r}
+library(rpart)
+f <- "deposit ~ age + job + marital +
+education + default + balance + housing + loan +
+contact + day + month"
+
+t <- rpart(formula = f, method = "class", data = bank_tr)
+```
+
+### Trabajar con todas las variables
+
+```{r}
+library(rpart)
+t <- rpart(formula = deposit~., method = "class", data = bank_tr)
+```
+
+
+### Visualizamos el árbol
+
+Para visualizar un árbol podemos usar el paquete `rpart.plot`.
+
+```{r}
+#install.packages("rpart.plot")
+library(rpart.plot)
+prp(t,type=5, box.palette = "Reds", tweak = 1.2, varlen = 20)
+text(t, use.n = TRUE, cex = .8, xpd = NA)
+```
+
+```{r}
+plot(t, uniform = TRUE, compress = TRUE, branch = .2)
+text(t, use.n = TRUE, cex = .8, xpd = NA)
+```
+
+# Predicciones
+
+```{r}
+predArbol1_tr <- predict (t, newdata = bank_tr, type="prob")
+predArbol1_test <- predict (t, newdata = bank_test, type="prob")
+```
+
+### Matrices de confusión
+
+
+```{r}
+table(ifelse(predArbol1_tr[,"yes"]>0.5, "yes", "no"), bank_tr$deposit)
+```
+
+```{r}
+table(ifelse(predArbol1_test[,"yes"]>0.5, "yes", "no"), bank_test$deposit)
+```
+
+# Curvas ROC
+
+```{r}
+library(pROC)
+roc_tr <- roc(response = bank_tr$deposit, predictor = predArbol1_tr[,1])
+roc_test <- roc(response = bank_test$deposit, predictor = predArbol1_test[,1])
+plot(roc_tr,col = "red",      legacy.axes = TRUE, print.auc.y = 0.9, print.auc = TRUE)
+plot(roc_test, col = "blue", add = TRUE, print.auc.y = 0.65, print.auc = TRUE)
+
+legend("bottom", c("Training", "Testing"),
+       lty = c(1,1), lwd = c(2, 2), col = c("red", "blue"), cex = 0.75)
+```
+
+# Controles
+
+El algoritmo presenta muchos parámetros que podemos modificar. Estos cambio pueden afectar significativamente la capacidad predictiva dl modelo. También pueden prevnir situaciones de sobreajuste.
+
+
+```{r}
+?rpart.control
+```
+
+Los típicos parámetros para manipular un árbol son:
+
+-   minsplit : mínimo numero de observaciones par dividir un nodo
+-   maxdepth : es la profundidad máxima del nodo
+-   minbucket : mínimo numero de observaciones de un nodo
+
+### Definimos nuevos parámetros
+
+```{r}
+controles <- rpart.control(minsplit = 20, minbucket = 20, 
+                           cp =0.001, maxcompete = 4, 
+                           maxsurrogate = 5,
+                           usesurrogate = 2, 
+                           xval = 10,surrogatestyle = 0,
+                           maxdepth = 8)
+
+```
+
+### Modelamos nuevamente
+
+```{r}
+#Quiero un árbol más frondoso
+#probar eliminar la variable month
+t <- rpart(formula = deposit~.-month, method = "class", 
+           data = bank_tr, control = controles)
+```
+
+
+```{r}
+# viasulaziation
+#install.packages("rpart.plot")
+library(rpart.plot)
+prp(t,type=5, box.palette = "Reds", tweak = 1.2, varlen = 20)
+text(t, use.n = TRUE, cex = .8, xpd = NA)
+```
+
+```{r}
+plot(t, uniform = TRUE, compress = TRUE, branch = .2)
+text(t, use.n = TRUE, cex = .8, xpd = NA)
+```
+
+# Predicciones
+
+```{r}
+predArbol1_tr <- predict (t, newdata = bank_tr, type="prob")
+predArbol1_test <- predict (t, newdata = bank_test, type="prob")
+```
+
+```{r}
+table(ifelse(predArbol1_tr[,"yes"]>0.5, "yes", "no"), bank_tr$deposit)
+```
+
+```{r}
+table(ifelse(predArbol1_test[,"yes"]>0.5, "yes", "no"), bank_test$deposit)
+```
+
+# Curvas ROC
+
+```{r}
+library(pROC)
+roc_tr <- roc(response = bank_tr$deposit, predictor = predArbol1_tr[,1])
+roc_test <- roc(response = bank_test$deposit, predictor = predArbol1_test[,1])
+plot(roc_tr,col = "red",      legacy.axes = TRUE, print.auc.y = 0.9, print.auc = TRUE)
+plot(roc_test, col = "blue", add = TRUE, print.auc.y = 0.65, print.auc = TRUE)
+
+legend("bottom", c("Training", "Testing"),
+       lty = c(1,1), lwd = c(2, 2), col = c("red", "blue"), cex = 0.75)
+```
+
+# Valuación del negocio
+
+- Costos Variables: 1000 AR\$ x contacto 
+- Ingresos: 2000 AR\$ x venta
+
+```{r}
+umbral<-0.5
+TP <- sum(predArbol1_test[,2]>umbral & bank_test$deposit == "yes")
+FP <- sum(predArbol1_test[,2]>umbral & bank_test$deposit == "no")
+FN <- sum(predArbol1_test[,2]<umbral & bank_test$deposit == "yes")
+TN <- sum(predArbol1_test[,2]<umbral & bank_test$deposit == "no")
+```
+
+```{r}
+Resultado = 2000 * TP - 1000 * (FP+TP) 
+cat("La campaña tiene un beneficio esperado de $" , Resultado," contactando a ", FP+TP,  sep="")
+```
+
+Que pasa si contactamos a todos los clientes
+
+```{r}
+#Que pasa si contactamos al azar una determinada cantidad de clientes?
+azar <- sample(nrow(bank_test), FP+TP)
+muestraAzar<-ifelse(bank_test$deposit[azar]=="yes", 1, 0)
+
+ResultadoAzar <- sum(muestraAzar*2000)  - 1000 * (FP+TP)
+cat("La campaña tiene un beneficio esperado de $" , ResultadoAzar," contactando a ", FP+TP,  sep="")
+```
+
+# Optimizar el umbral
+
+```{r}
+#Defino una función para valorizar
+
+res <- function(pp,hh,uu){
+  2000 * sum(pp>uu & hh == "yes") - 1000 * sum(pp>uu)
+}
+res(predArbol1_test[,2],bank_test$deposit,umbral)
+res(predArbol1_test[,2],bank_test$deposit,.9)
+res(predArbol1_test[,2],bank_test$deposit,.1)
+
+#Y si movemos el umbral
+
+u <- seq(from=0, to=1, by=0.03) #Creo una secuencia de la cual tomar los umbrales
+vres <- numeric(length(u)) #Me genero un vector para guardar resulados
+for(i in 1:length(u)){
+  vres[i] <-  res(predArbol1_test[,2],bank_test$deposit,u[i])}
+
+summary(vres)
+  
+plot(y=vres, x=u, main="Resultados", ylab="umbrales")
+
+#Los umbrales que generan el máximo:
+which(vres == max(vres))
+u[which(vres == max(vres))]
+
+data.frame(u, vres)
+```
+
+# Paquete party
+
+```{r}
+#install.packages("party")
+library(party)
+?ctree
+?ctree_control
+
+t2 <- party::ctree(formula=deposit~., data=bank_tr, 
+                   controls = ctree_control(maxdepth = 3))
+plot(t2)
+
+plot(t2, type = "simple")#nos da la media en cada nodo terminal
+
+
+#Obtener las predicciones
+predicciones_test_ <- predict(t2,newdata=bank_test, type="response")#Obtenemos la respuesta
+predicciones_test_Nodo <- predict(t2,newdata=bank_test, type="node")#Obtenemos el nodo final
+predicciones_test_Prob <- sapply(predict(t2, newdata=bank_test,type="prob"),'[[',2)#Obtenemos el score
+
+
+#############################################################
+#Otro paquete para hacer árboles
+#library(rtree)
+#?tree
+```
+
+
+
+# Construir funciones de uso constante
+
+Cuando estamos trabajando en un proyecto y sabemos que un conjunto de tareas vamos a ejecutarlas muchas veces, podemos desarrollar nuestras propias funciones que hagan este conjunto de tareas. Lo que ganamos es que vamos a sintetizar un conjunto de tareas dentro de una función lo que nos compacta el código y lo simplifica a la visual.
+
+## Construimos una función para las predicciones
+
+```{r}
+predecir <- function(modelo, nuevaData){
+  predicion <- predict (modelo, nuevaData , type="prob")
+}
+```
+
+## Cosntruimos una funcion para graficar el árbol
+
+```{r}
+arbol <- function(modelo){
+plot(modelo, uniform = TRUE, compress = TRUE, 
+     branch = .2);text(modelo, use.n = TRUE, 
+                       cex = .8, xpd = NA)
+}
+```
+
+## Construimos una función para la matriz de confusión
+
+```{r}
+matrizConfusion <- function(predicho, observado, umbral){
+  table(ifelse(predicho>umbral, "yes", "no"), observado)
+}
+```
+
+
+## Construimos una función para la curva ROC
+
+```{r}
+curvaROC <- function(observadoTr, observadoTest, probTr, probTest){
+library(pROC)
+roc_tr <- roc(response = observadoTr, predictor = probTr)
+roc_test <- roc(response = observadoTest, predictor = probTest)
+plot(roc_tr,col = "red",legacy.axes = TRUE, 
+     print.auc.y = 0.9, print.auc = TRUE)
+plot(roc_test, col = "blue", add = TRUE,
+     print.auc.y = 0.65, print.auc = TRUE)
+
+legend("bottom", c("Training", "Testing"),
+       lty = c(1,1), lwd = c(2, 2), col = c("red", "blue"), cex = 0.75)
+}
+```
+
+
+
+## Como usamos estas funciones
+
+
+```{r}
+controles <- rpart.control(minsplit = 20, minbucket = 20, 
+                           cp =0.001, maxcompete = 4, 
+                           maxsurrogate = 5,
+                           usesurrogate = 2, 
+                           xval = 10,surrogatestyle = 0,
+                           maxdepth = 10)
+
+t <- rpart(formula = deposit~.-month, method = "class", 
+           data = bank_tr, control = controles)
+
+prediccionTraining <- predecir(modelo = t, nuevaData = bank_tr)
+prediccionTesting <- predecir(modelo = t, nuevaData = bank_test)
+```
+
+```{r}
+arbol(t)
+```
+
+```{r}
+matrizConfusion(predicho=prediccionTesting[,2],
+                observado= bank_test$deposit,
+                umbral= 0.5)
+```
+
+```{r}
+curvaROC(observadoTr=bank_tr$deposit, observadoTest=bank_test$deposit, 
+         probTr=prediccionTraining[,1], probTest=prediccionTesting[,1])
+```
+
+
+
