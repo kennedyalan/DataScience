@@ -6,7 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score
 
-clientes_credito = pd.read_csv('Data/Clientes_Credito.csv', sep=';')
+clientes_credito = pd.read_csv('Python/Circular/Data/Clientes_Credito.csv', sep=';')
 
 clase = clientes_credito['Buen Pagador']
 datos = clientes_credito[['Monto Credito', 'Ingreso Neto', 'Coeficiente Credito', 'Monto Cuota', 'Grado Academico']]
