@@ -1,0 +1,293 @@
+---
+title: "Algoritmo genético"
+output: html_notebook
+---
+
+Para poder optimizar empleando Algoritmos genéticos debemos emplear la función  `ga()` que se encuentra en el paquete *GA* el cual debemos instalar.
+
+```{r}
+#install.packages("GA")
+library(GA)
+```
+
+Para analizar como funciona este algoritmo para encontrar una solución óptima creamos una función para crear una parábola.
+
+```{r}
+parabola <- function(x,y) {return(x^2 + y^2)}#Función que queremos minimizar
+```
+
+Probamos algunos valores en esta función.
+
+```{r}
+parabola(3,4)
+parabola(1,3)
+parabola(2,1)
+```
+
+
+Queremos encontrar cual es el par de valores (x,y) que hacen que la función de como resultado el valor mínimo.
+
+Graficamos la función para ver su forma:
+
+```{r}
+###################################################
+# Graficamos la función y analizamos la forma
+x=seq(-7,7,length=100)
+y=seq(-7,7,length=100)
+
+#parabola=function(x,y) {return(-12*cos((x^2+y^2)/4)/(3+x^2+y^2))}
+z=outer(x, y, parabola)
+ecuacionParab <- expression(z == x^2 + y^2)
+persp(x,y,z,theta = 30, phi = 30,expand=0.5, col = "orange",
+      main="Paraboloide", sub=ecuacionParab, col.main="blue")
+
+persp(x,y,z,theta = 30, phi = 30,expand=0.5, col = "darkolivegreen1", main="Paraboloide",
+      sub=ecuacionParab, scale=FALSE, border=NA, shade=0.5, col.main="blue")
+image(x,y,z)
+contour(x,y,z,add=T)
+```
+
+El algoritmo genético va a ir presentando pares de valores a la función "parabola" y los va a evaluar. Los mejores individuos son seleccionados y serán el origen de nuevos pares de soluciones. El algoritmo itera una cantidad de veces o hasta encontrar una solución satisfactoria.
+
+- Paso 1: Crear una población inicial de N individuos
+
+- Paso 2: Calcular la aptitud de cada individuo (fitness) en
+la función objetivo de la optimización.
+
+- Paso 3: Seleccionar dos individuos de la población
+actual. Asignar mayor probabilidad de selección a los
+mas aptos.
+
+- Paso 4: Entrecruzar a los dos individuos seleccionados y
+formar un nuevo individuo de la próxima generación.
+
+- Paso 5: Aplicar un proceso de mutación al nuevo
+individuo
+
+- Paso 6: Repetir los pasos 3, 4 y 5 hasta obtener N
+nuevos individuos.
+
+- Paso 7: Los nuevos individuos reemplazan a los viejos y
+el proceso continua desde el paso 2.
+
+Creamos una nueva función para calcular la fortaleza de cada par de puntos en la función parábola.
+
+Tenemos diferentes formas de definir esta función de fortaleza.
+
+### Para maximizaciones:
+
+$$Fitness = f(individuo)$$
+### Para minimizaciones
+
+$$Fitness = -f(individuo)$$
+$$Fitness = \frac{1}{1+f(individuo)}$$
+
+
+```{r}
+####################################################
+# creamos una funcón para calcular el fitness de cada individuo
+fitness <- function(x) {-parabola(x[1], x[2])}
+
+fitness <- function(x) {1/(1+ parabola(x[1], x[2]))} 
+
+#podría haber sido todo junto:
+fitness <- function(x) {1/(1+ x[1]^2 + x[2]^2)} 
+```
+
+¿Cómo funciona la función ga()?
+
+La función `ga` envía un vector x que contiene dos valores a la función definida en el argumento fitness (La función requiere dos valores).
+
+```{r}
+AG <- ga(type = "real-valued",
+        fitness = fitness, 
+        lower = c(-20,-20), #Deben ser provistos para saber cuantos valores entregar
+        upper = c(20,20))
+plot(AG)
+AG@solution
+```
+
+# Algoritmo hecho a mano (Material extra)
+
+
+```{r}
+N=10 #cada generación va a tener 10 individuos
+#Generamos una población inicial
+
+poblacion <- matrix(runif(N*2, -10,10), ncol=2, nrow=N)
+colnames(poblacion)<- c("X", "Y")
+poblacion
+
+for (j in 1:100){
+  nuevaPoblacion<-c()
+  for (i in 1:10){
+
+  valuacion <- parabola(x=poblacion[,1], y=poblacion[,2]) #valúo cada individuo en la función
+  
+  fitnes_ <- 1/(1+valuacion) #Calculo el fitness. Menos es mejor
+  
+  #Seleccionar individuos
+  elegidos <- sample(10, size=2, prob=fitnes_/sum(fitnes_))#Ruleta
+  
+  #Cruzar a los individuos
+  cruce<-sample(c(T,F), size=2)
+  
+  nuevoIndividuo<-poblacion[elegidos[1],]
+  nuevoIndividuo[cruce]<-poblacion[elegidos[2],cruce]
+  
+  #Mutación
+  mutador <- 1 + runif(n=2, min=-1, max=1)*rbinom(2, 1, 0.3)
+  nuevoIndividuo <- nuevoIndividuo*mutador
+  
+  #Agrego individuo a la nueva generación
+  nuevaPoblacion<-rbind(nuevaPoblacion, nuevoIndividuo)
+  }
+poblacion <- nuevaPoblacion
+}
+
+valuacion <- parabola(x=poblacion[,1], y=poblacion[,2])
+ganador <- which.min(valuacion)
+poblacion[ganador,]
+```
+
+# Problema real
+
+## Optimizador de recorrido
+
+Un repartidor tiene que visitar 10 puntos de entrega y quiere saber cual es el recorrido óptimo para minimizar la distancia recorrida.
+
+Creamos un data frame con las posiciones de los 10 puntos de entrega en un plano de dos dimensiones.
+
+```{r}
+set.seed(1)#seteo la semilla para replicar numeros aleatorios
+x<-runif(n=10, min=0, max=10);y<-runif(n=10, min=0,max=10)
+
+data <- matrix(data=c(x,y), ncol=2, nrow=10, byrow=F)
+```
+
+Si recorre los puntos de entrega como recibe los sobres el reparto quedaría configurado de la siguiente forma.
+
+```{r}
+plot(x,y, pch="", main="Recorrido aleatorio")
+text(x,y, labels = letters[1:10])
+lines(x,y, type="l", col="blue")
+```
+
+¡No parece ser el mejor recorrido!
+
+Para resolver el problema resulta conveniente realizar una matriz de distancias entre todos los puntos. El algoritmo deberá ordenar los puntos tal que la distancia final sea la mínima.
+
+```{r}
+#calculo matriz de distancia
+D <- matrix(0, ncol=10, nrow=10)
+
+#Calculo manual
+for (i in 1:10){
+  for (j in 1:10){
+    D[i,j]<- sqrt((data[i,1] - data[j,1])^2 + (data[i,2] - data[j,2])^2)
+    }
+}
+
+#Calculo con la función dist()
+D_<- sqrt(as.matrix(dist(x, method = "euclidean"))^2 + 
+  as.matrix(dist(y, method = "euclidean"))^2)
+```
+
+Definimos la función de fortaleza
+
+```{r}
+# Que hace la fucnion embed()
+print("Resultado de la función embed()")
+embed(c(1,3,2,4),2)[, 2:1]
+
+## Fitness function 
+trayectoria <- function(recorrido, D) {
+  #c(recorrido, recorrido[1]) 
+  ruta <-embed(recorrido, 2)[, 2:1]
+  sum(D[ruta])
+}
+#Cuanto menos distancia mejor. Otra manera de expresar el mejor fitness
+Fitness <- function(recorrido) 1/trayectoria(recorrido, D)
+```
+
+Finalmente ejecutamos el algoritmo genético para que proponga diferentes formas de realizar el recorrido hasta encontrar una que minimice la distancia.
+
+¿Cómo funciona?
+La función `ga` propone y envía un vector de 10 elementos recombinados
+Esos 10 elementos son el "input" para la función definida en el argumento "fitness".
+
+Las mejores propuestas sobreviven y serán el origen de una nueva generación de posibles soluciones.
+
+El problema es un caso donde se debe definir un orden de los 10 elementos. Deben permutarse hasta encontrar cuál es la mejor.
+
+```{r}
+GA.fit <-ga(type = "permutation", #se trata de un problema de permutación
+           fitness = Fitness, 
+           lower = 1,  upper = 10, 
+           popSize = 10, 
+           maxiter = 500, run = 100, 
+           pmutation = 0.2, monitor = NULL)
+
+GA.fit@solution
+```
+
+Recorrido propuesto por el algoritmo:
+
+```{r}
+plot(x,y, pch="", main="Recorrido óptimo")
+text(x,y, labels = letters[1:10])
+lines(x[GA.fit@solution],y[GA.fit@solution], type="l", col="blue")
+
+plot(GA.fit)
+```
+
+
+Los tipos de soluciones buscadas pueden ser:
+
+- "binary" (valores binarios)
+- "real-valued" (valores realies)
+- "permutation" (permutación de valores)
+
+## ideas para profundizar en el problema
+
+¿Cuál es la distancia del recorrido aleatorio?
+
+¿Cuál es la distancia del recorrido óptimo?¿Cuánto se ahorra?
+
+¿Cuál sería la solución si debo iniciar el recorrido desde un punto inicial definido?
+
+¿Cómo sería la solución si el recorrido debe ser realizado por dos repartidores?
+
+# Material extra
+
+## Método alternativo para calcular la distancia
+
+```{r}
+#Otra forma de definir distancia
+#Esta forma es menos eficaz porque en cada iteración tiene que calcular las distancias.
+#En la otra forma calculamos todas las distancias por única vez
+
+#Podemos calcular la distancia total en forma matricial/vectorial
+sum( sqrt( (data[1:9,1]-data[2:10,1])^2 + (data[1:9,2]-data[2:10,2])^2))
+     
+trayectoria <- function(x) {
+  sum( sqrt( (data[x,1][1:9]-data[x,1][2:10])^2 + (data[x,2][1:9]-data[x,2][2:10])^2))
+}
+
+Fitness <- function(x) 1 / (1+trayectoria(x))
+
+GA.fit <-ga(type = "permutation", 
+            fitness = Fitness, 
+            lower = 1,  upper = 10, popSize = 10, 
+            maxiter = 1000, run = 100, 
+            pmutation = 0.2, monitor = NULL)
+
+GA.fit@solution
+
+plot(x,y, pch="", main="Recorrido óptimo")
+text(x,y, labels = 1:10)
+lines(x[GA.fit@solution],y[GA.fit@solution], type="l", col="blue")
+
+plot(GA.fit)
+```
+
