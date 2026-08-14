@@ -1,0 +1,416 @@
+---
+title: "Regresión logística"
+output: html_notebook
+---
+
+# Regresión logística
+
+La Regresión Logística es un método de regresión que permite estimar la probabilidad de una variable cualitativa binaria en función de otras.
+
+Un uso típico de este tipo de regresiones es para clasificar si una observación pertenece a un grupo u otro, por ejemplo, clasificar a un paciente que necesita ser hospitalizado en base a ciertos signos vitales.
+
+Una regresión logística intenta crear una recta que se ajuste a los logaritmos de los ODDS (P(y=k) sobre 1-P(y=k)).
+
+$$ODDS=\frac{P_{i}}{1-P_{i}}= e^{(\beta_{0}+\sum_{i=1}^{n}\beta_{i}x_{i})}$$
+
+...aplicando logaritmos:
+
+$$ln(\frac{p(Y=k|X = x)}{1-p(Y=k|X = x)})=\beta_0+\beta_1X$$
+
+Aplicando ciertas transformaciones, la ecuación anterior se traduce a:
+
+$$P(Y=y|X = x)= \frac{1}{1+e^{-(\beta_0+\beta_1X)}}$$
+
+...conocida como función sigmoide.
+
+En una regresión lineal simple, en cambio, se buscan los coeficientes de la ecuación.
+
+$$Y=\beta_0+\beta_1X$$
+
+## Deviance
+
+En una regresión logística no se calculan los errores cuadrados como en una regresión lineal. En su lugar se calcula la *Deviance* la cual presenta la siguiente fórmula de cálculo.
+
+$$Deviance = 2 \sum_{i=1}^n \left[ Y_i \log \left( \frac{Y_i}{\widehat{p_i}} \right) + (1-Y_i) \log \left( \frac{1-Y_i}{1-\widehat{p_i}}\right) \right]$$
+
+## Simulamos datos
+
+```{r}
+n=1000
+set.seed(0)
+x1 <- rnorm(n) 
+x2 <- rnorm(n)
+x3 <- rnorm(n)
+z = 1 + 2*x1 + 3*x2
+pr = 1/(1+exp(-z)) 
+y = rbinom(n,1,pr) 
+
+df = data.frame(y=y,x1=x1,x2=x2, x3=x3)
+rm(list=c("pr", "z", "x1", "x2", "x3", "y"))
+#Con la función rm() elimino objetos
+```
+
+Para ejecutar un modelo de Regresión logística podemos utilizar la función `glm()` cuyos argumentos más importantes son:
+
+-   formula
+-   data
+-   family="binomial"
+
+A modo de ejemplo realizamos una regresión logística simple (con una sola variable explicativa).
+
+```{r}
+plot(x=df$x1 ,
+     y= df$y+rnorm(n=n, mean=0, sd=0.02), 
+     col=rgb(0, 0, 0,alpha=50, maxColorValue = 255), pch=16)
+```
+
+```{r}
+modelo.log1 =glm(formula=y~x1,data=df,family="binomial")
+summary(modelo.log1)
+```
+
+Así obtenemos los coeficientes de la ecuación:
+
+$$P(Y=y|X = x)= \frac{1}{1+e^{-(0.30275+0.86508*X)}}$$
+
+La regresión logística no busca la recta que mejor se ajusta a los puntos, sino que ajusta una curva de forma sigmoidal.
+
+```{r}
+#creamos valores a predecir
+Predicted_data <- data.frame(x1=seq(from=min(df$x1),
+                                    to=max(df$x1),
+                                    length.out=n))
+ 
+#Calculamos las predicciones
+Predicted_data$y = predict(modelo.log1, 
+                           Predicted_data, 
+                           type="response")
+ 
+# Graficamos los puntos y la curva
+plot(x=df$x1 ,y= df$y, 
+     col=rgb(0, 0, 0,alpha=20, maxColorValue = 255))
+lines(y~x1 , Predicted_data, lwd=2, col="green")
+```
+
+```{r}
+nuevaX=1
+1/(1+exp(-modelo.log1$coefficients[1]-modelo.log1$coefficients[2]*nuevaX))
+```
+
+## Evaluación del modelo
+
+A la hora de evaluar la validez y calidad de un modelo de regresión logística, se analiza tanto el modelo en su conjunto como los predictores que lo forman. Se considera que el modelo es útil si es capaz de mostrar una mejora explicando las observaciones respecto al modelo nulo (sin predictores). El test Likelihood ratio calcula la significancia de la diferencia de residuos entre el modelo de interés y el modelo nulo.
+
+$$H_0: \beta_1=\beta_2=\ldots=\beta_k=0 \\
+H_1 = \text{al menos uno de los} \, \beta_j\neq0 \, \text{con} \, j=1,2,\ldots,k,$$
+
+Afortunadamente, la funcion *glm()* almacena los errores del modelo nulo y los del modelo ajustado.
+
+```{r}
+dif_residuos <- modelo.log1$null.deviance - modelo.log1$deviance
+# Grados libertad
+df. <- modelo.log1$df.null - modelo.log1$df.residual
+# p-value
+p_value <- pchisq(q = dif_residuos,df = df., lower.tail = FALSE)
+paste("Diferencia de residuos:", round(dif_residuos, 4))
+paste("Grados de libertad:", df.)
+paste("p-value:", p_value)
+```
+
+¿Qué sería un modelo nulo?
+
+```{r}
+modelo.Nulo =glm(formula=y~1,data=df,family="binomial")
+summary(modelo.Nulo)
+```
+
+Un test similar puede realizarse con la función *anova()*.
+
+```{r}
+anova(modelo.log1, test = "Chisq")
+```
+
+## ¿Cómo se interpreta el coeficiente?
+
+```{r}
+summary(modelo.log1)
+```
+
+El valor $\beta_1$ implica que por cada unidad que se incrementa $X_1$ el valor en los odds de los x1=1 son $exp(\beta_1)$ veces más grandes que los odds de los x1=0.
+
+```{r}
+exp(modelo.log1$coefficients[2])
+```
+
+```{r}
+#Estimación para x=1
+y_1 <- 1/(1+ exp(-modelo.log1$coefficients[1]- 1*modelo.log1$coefficients[2]))
+#Estimación para x=0
+y_0  <- 1/(1+ exp(-modelo.log1$coefficients[1]- 0*modelo.log1$coefficients[2]))
+```
+
+```{r}
+#Calculamos el ratio entre ambos odds
+(y_1/(1-y_1)) / (y_0/(1-y_0))#Esto interpreta beta!!
+```
+
+El exp() del término independiente representa los odds para X=0.
+
+# Regresión logística múltiple
+
+$$ln(\frac{p(Y=k|X = x)}{1-p(Y=k|X = x)})=\beta_0+\beta_1X+\beta_2X_2+....+\beta_nX_n$$
+
+$$P(Y=y|X = x)= \frac{1}{1+e^{-(\beta_0+\beta_1X_1+\beta_2X_2+....+\beta_nX_n)}}$$
+
+## Construimos el modelo
+
+```{r}
+modelo.log2 =glm(y~x1+x2+x3,data=df,family="binomial")
+summary(modelo.log2)
+```
+
+Observamos que la variable x3 presenta un valor p-value "alto" (mayor a 0.05) por lo que se recomienda eliminar esta variable del modelo.
+
+```{r}
+modelo.log2 =glm( y~x1+x2,data=df,family="binomial")
+summary(modelo.log2)
+```
+
+## Histograma de las predicciones
+
+```{r}
+hist(modelo.log2$fitted.values)
+```
+
+## Matriz de confusión
+
+```{r}
+predicciones <- predict(modelo.log2, df, type="response")
+df$predicciones <- predicciones
+clasifico <- (predicciones>0.5)*1
+table(clasifico,df$y)
+```
+
+# Caso real
+
+```{r message=FALSE, warning=FALSE}
+rm(list=ls())#elimino todos los objetos del entorno
+#install.packages("liver")
+library(liver)
+churn<-data("churnTel")
+churn <- churnTel
+```
+
+```{r}
+table(churn$churn)
+prop.table(table(churn$churn))
+```
+
+Cambio el orden de los factores, si los dejamos como están va a tomar al "yes"=0 y al "no"=1. Entonces una probabilidad alta va a implicar que tiene alta probabilidad de NO fugarse.
+
+```{r}
+churn$churn<-factor(x=churn$churn,levels=c("no", "yes"), labels=c("no", "si"))
+```
+
+```{r}
+table(churn$churn)
+```
+
+## Partición de datos
+
+Separo al conjunto de datos en "Entrenamiento" y "Testeo" de manera aleatoria.
+
+```{r}
+seleccion <- sample(1:nrow(churn), nrow(churn)*0.7, replace=FALSE)
+training <- churn[seleccion,]
+testing <- churn[-seleccion,]
+```
+
+...y entrenamos un modelo con el data set correspondiente.
+
+```{r}
+modelo.completo=glm(churn~.-customer.ID,data=training,family="binomial")
+summary(modelo.completo)
+```
+
+Si algún coeficiente toma valor NA significa uno motivo que puede suceder es que esta variable está perfectamente correlacionada con otra.
+
+## Selección de variables
+
+Seleccionamos sólo las variables que resultaron significativas.
+
+```{r}
+modelo.churn =glm(churn ~ senior.citizen + tenure + multiple.lines +
+                     internet.service +  device.protection + 
+                     streaming.TV + streaming.movie + contract +
+                     paperless.bill + payment.method + 
+                     monthly.charge + total.charge,
+                   data=training,family="binomial")
+#summary(modelo.churn)
+```
+
+...y obtenemos un modelo con todas sus variables significativas.
+
+## Test para validar el modelo
+
+```{r}
+dif_residuos <- modelo.churn$null.deviance - modelo.churn$deviance
+# Grados libertad
+df <- modelo.churn$df.null - modelo.churn$df.residual
+# p-value
+p_value <- pchisq(q = dif_residuos,df = df, lower.tail = FALSE)
+paste("Diferencia de residuos:", round(dif_residuos, 4))
+paste("Grados de libertad:", df)
+paste("p-value:", p_value)
+```
+
+```{r}
+anova(modelo.churn, test = "Chisq")
+```
+
+## Predicciones y Matriz de confusión
+
+```{r}
+prediccionesTrain <- predict(modelo.churn, training, type="response")
+clasificoTrain <- c("no", "si")[(prediccionesTrain>0.5)+1]
+#clasificoTrain <- (prediccionesTrain>0.5)*1
+#clasificoTrain <- c("no", "si")[(prediccionesTrain>0.75)+1]
+table(clasificoTrain,training$churn)
+```
+
+```{r}
+prediccionesTest <- predict(modelo.churn, testing, type="response")
+clasificoTest <- c("no", "si")[(prediccionesTest>0.5)+1]
+table(clasificoTest,testing$churn)
+```
+
+# Material extra
+
+¿Es correcto el punto de corte para determinar la categoría?¿Cuál es el punto de corte óptimo?
+
+## Umbral óptimo
+
+Para hallar el punto de corte óptimo hay que valuar al modelo para distintos puntos de corte. Para ello recorremos todos los puntos de cortes posibles y almacenamos la métrica que deseamos maximizar.
+
+Las métricas para evaluar un modelo se basan en la distribución de los casos en la matriz de confusión.
+
+|                | Observado=0 | Observado=1 |
+|----------------|-------------|-------------|
+| **Predicho=0** | VN          | FN          |
+| **Predicho=1** | FP          | VP          |
+
+### Sensibilidad y Especificidad
+
+El umbral óptimo es aquel donde la sensibilidad se iguala a la especificidad.
+
+Encontrar un punto de corte óptimo es buscar el punto donde la Sensibilidad (VP/ (VP +FN)) se iguala a la Especificidad (VN/ (VN +FP)).
+
+```{r}
+pruebo <-seq(0.01, .99, by=0.01)
+guardo <- matrix(NA, nrow=length(pruebo), ncol=4,
+                 dimnames=list(NULL,c("cutoff", "sensibilidad", "especificidad", "diff.")))
+
+for (i in 1:length(pruebo)){
+    guardo[i,1] <- pruebo[i]
+    clasifico <- (prediccionesTrain>pruebo[i])*1
+    #buscamos maximizar aciertos TP/FP
+    mc<-table(clasifico,training$churn)
+    guardo[i,2] <- (mc[4])/(mc[4]+mc[3])
+    guardo[i,3] <- (mc[1])/(mc[1]+mc[2])
+}
+guardo[,4]<-guardo[,2]-guardo[,3]
+```
+
+```{r}
+prediccionesTrain <- predict(modelo.churn, training, type="response")
+clasificoTrain <- c("no", "si")[(prediccionesTrain>.3)+1]
+table(clasificoTrain,training$churn)
+```
+
+### Maximizar una métrica
+
+Supongamos que tenemos que obtener un modelo tal que queremos maximizar una métrica en particular.
+
+$$Precision = \frac{VP}{VP+FP}$$ $$Recall = \frac{VP}{VP+FN}$$
+
+$$Accuracy = \frac{VP+VN}{TOTAL}$$
+
+```{r}
+pruebo <-seq(0.01, .99, by=0.02)
+guardo <- matrix(NA, nrow=length(pruebo), ncol=2,
+                 dimnames = list(NULL,c("cutoff", "Accuracy")))
+
+for (i in 1:length(pruebo)){
+    guardo[i,1] <- pruebo[i]
+    clasifico <- (prediccionesTrain>pruebo[i])*1
+    #buscamos maximizar aciertos TP/FP
+    mc<-table(clasifico,training$churn)
+    guardo[i,2] <- (mc[4]+mc[1])/(sum(mc))
+    }
+```
+
+```{r}
+prediccionesTrain <- predict(modelo.churn, training, type="response")
+clasificoTrain <- c("no", "si")[(prediccionesTrain>0.55)+1]
+table(clasificoTrain,training$churn)
+```
+
+### Valuación monetaria del Umbral óptimo
+
+En asuntos de negocios, el umbral óptimo puede definirse en medida de los beneficios esperados por aplicar un modelo.
+
+Supongamos que la empresa decide realizar una campaña enviando un obsequio para fidelizar clientes y así minimizar la fuga. Supongamos que a la empresa retener un cliente le da una ganancia de 50 mientras que enviar un regalo a un cliente que igual se fuga tiene un costo de 100.
+
+¿A que clientes conviene realizarle un obsequio?
+
+Le va a convenir realizar un obsequio a aquellos clientes con una probabilidad mayor un punto de corte tal que maximice la ganancia.
+
+```{r}
+pruebo <-seq(0.01, .99, by=0.01)
+guardo <- matrix(NA, nrow=length(pruebo), ncol=2, 
+                 dimnames = list(NULL, c("cutoff", "Ganancia")))
+
+for (i in 1:length(pruebo)){
+    guardo[i,1] <- pruebo[i]
+    clasifico <- (prediccionesTrain>pruebo[i])*1
+    mc<-table(clasifico, training$churn)
+    guardo[i,2] <- mc[4]*50 - mc[2]*100
+}
+```
+
+## Selección de variables paso a paso
+
+Seleccionar las variables significativas en forma manual puede resultar tedioso. Existe una función con la cual podemos seleccionar las variables que realizan el mejor modelo.
+
+La función es `step()` y por defecto arranca del modelo completo y va eliminando variables una por una hasta obtener un modelo con todas sus variables significativas.
+
+```{r message=FALSE, warning=FALSE}
+backwards = step(modelo.completo,
+                 direction="backward", 
+                 trace=FALSE)
+formula(backwards)
+summary(backwards)
+```
+
+O también podemos comenzar de un modelo vacío e ir agregando variables hasta encontrar el mejor modelo
+
+```{r}
+modeloNulo <- glm(churn ~ 1,data=churn,family=binomial)
+
+forwards = step(modeloNulo,
+                scope=list(lower=formula(modeloNulo),
+                           upper=formula(modelo.completo)),
+                direction="forward")
+formula(forwards)
+```
+
+O una combinación de las anteriores
+
+```{r}
+bothways <- step(modeloNulo,
+                 scope=list(lower=formula(modeloNulo),
+                      upper=formula(modelo.completo)),
+                 direction="both",
+                 trace=FALSE)#trace=F para que no imprima
+formula(bothways)
+```

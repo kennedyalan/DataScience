@@ -1,0 +1,448 @@
+---
+title: "Minería de texto"
+output: html_notebook
+---
+
+# Nube de palabras
+
+Cargamos las librerías necesarias.
+
+```{r warning=FALSE}
+#install.packages("tm")
+#install.packages("wordcloud")
+
+library(tm)
+library(wordcloud)
+```
+
+## Lectura de documentos
+
+Vamos a leer un conjunto de documentos que se encuentran guardados en una carpeta. Estos archivos con texto se almacenan todos juntos en un *corpus*.
+
+```{r}
+## cargo el corpus de textos a analizar
+docs <- Corpus(DirSource("/media/cesar/cesar_SD/Curso de R/Instituto data science/Circular/10 Mineria de Texto/Discursos", 
+                         encoding = "UTF-8"))
+
+#docs <- Corpus(DirSource("C:/Users/cprocopio/Downloads/tm/Pruebas", encoding = "UTF-8"))
+```
+
+Para acceder a los documentos podemos usar:
+
+```{r}
+docs[["Cesar.txt"]][["content"]]
+```
+
+
+## Reemplazar por espacio
+
+Vamos a necesitar crear una función especial para reemplazar algunos caracteres por un espacio en blanco.
+
+La función `content_transformer()` se usa para eliminar contenido.
+
+```{r}
+porEspacio <- content_transformer(function(x, pattern) {
+  return (gsub(pattern, " ", x))})
+
+porNada <- content_transformer(function(x, pattern) {
+  return (gsub(pattern, "", x))})
+```
+
+Si estas palabras las elimino podemos correr el riesgo que una cadena de la forma "todo_todas" quede definida como "todostodas". Nosotros queremos que quede definida como "todos" "todas".
+
+```{r}
+# Aplico la función recién definida al corpus
+docs <- tm_map(docs, porEspacio, "-")
+docs <- tm_map(docs, porEspacio, ":")
+docs <- tm_map(docs, porEspacio, "’")
+docs <- tm_map(docs, porEspacio, "‘")
+docs <- tm_map(docs, porEspacio, "/")
+docs <- tm_map(docs, porNada, "-")
+docs <- tm_map(docs, porNada, ".")
+docs <- tm_map(docs, porNada, ")")
+docs <- tm_map(docs, porNada, '\\(')
+```
+
+## Remover palabras y caracteres
+
+Hay algunas funciones ya definidas que nos permiten modificar ciertos caracteres como números o palabras que no tienen sentido semántico. Esto ya viene definido en R.
+
+```{r}
+docs <- tm_map(docs, removePunctuation)
+docs <- tm_map(docs,content_transformer(tolower))
+docs <- tm_map(docs, removeNumbers)
+```
+
+Eliminamos las palabras sin contenido semántico propio en inglés y en castellano. Puede resultar conveniente analizar si estas palabras carecen de sentido para el análisis que hagamos.
+
+```{r}
+docs <- tm_map(docs, removeWords, stopwords("english"))
+docs <- tm_map(docs, removeWords, stopwords("spanish"))
+```
+
+```{r}
+docs[["Cesar.txt"]][["content"]]
+```
+
+Elimino los espacios múltiples (Cuando hay varios espacios en blanco juntos queda uno solo)
+
+```{r}
+docs <- tm_map(docs, stripWhitespace)
+```
+
+También podríamos crear una bolsa de palabras que no nos interesen y eliminarlas del corpus.
+
+```{r}
+bolsa<-c("Palabras que quiero eliminar", "hhh", "pepepe", "Hola")
+docs <- tm_map(docs, removeWords, bolsa)
+```
+
+## Transformar el corpus a matriz
+
+Ahora transformamos el corpus en una matriz. Cada palabra será representada por una columna y cada linea por un discurso.
+
+```{r}
+dtm <- DocumentTermMatrix(docs)
+matriz<-as.matrix(dtm)
+```
+
+Contabilizamos las veces que aparece cada palabra
+
+```{r}
+## Hago la cuenta de frecuencia de las palabras sumando las columnas de la matriz
+freq <- colSums(as.matrix(dtm))
+
+## Hago una copia de freq ordenada en forma descendente
+ord <- order(freq,decreasing=TRUE)
+
+## Me quedo con las palabras que aparecen más de 10 veces
+freq2 <- freq[which(freq>=10)]
+
+
+df<-data.frame(palabra=names(freq2), frecuencia=freq2)
+df<-df[order(df$frecuencia, decreasing = T),]
+```
+
+## Construimos la nube de palabras
+
+```{r warning=FALSE}
+## Construyo la nube de palabras
+wordcloud(df$palabra,df$frecuencia, 
+          max.words=500,
+          scale=c(2,.2), random.order=FALSE)
+```
+
+## Guardamos el corpus
+
+```{r}
+writeCorpus(docs)
+```
+
+En la galería de gráficos podemos ver una colección de nubes de palabras https://r-graph-gallery.com/wordcloud.html
+
+# Clasificación supervisada de textos
+
+## Cargamos librerías
+
+https://www.tidyverse.org/
+
+```{r message=FALSE, warning=FALSE}
+#install.packages("tidyverse")
+#install.packages("tidyr")
+#install.packages("tidytext")
+#install.packages("naivebayes")
+#install.packages("tm")
+#install.packages("caret")
+
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(tidytext)
+library(naivebayes)
+library(tm)
+library(caret)#usamos la función confusion matrix
+```
+
+## Leemos tuits
+
+Leemos un archivo que contiene 1349 tuits.
+
+```{r}
+tuits_df <- read.csv("tuits.csv", stringsAsFactors = F, fileEncoding = "latin1")
+
+class(tuits_df)
+```
+
+## Limpieza de texto
+
+### Eliminamos texto que no nos sirve
+
+Podemos usar para reemplazar texto la función `gsub()`. Esta función es un poco compleja ya que tiene una variedad de usos para identificar texto no estructurado.
+
+```{r}
+# Todo lo que se parezca a una pagina web o todos los números que lo reemplace por un espacio
+tuits_df$texto2<- gsub("\\<http\\S*\\>|[0-9]|", "",
+                       tuits_df$text)
+```
+
+### Pasamos a minúscula
+
+```{r}
+tuits_df$texto2<- tolower(tuits_df$texto2)
+```
+
+## Construir una matriz con palabras
+
+Vamos a diseñar un modelo para que pueda predecir si un texto tiene como autor a MSFTMexico o a otro twitero.
+
+Vamos a usar una serie de funciones que se encuentran en el paquete tidyverse para hacer diferentes procedimientos.
+
+- `unnest_tokens` pone en una columna cada una de las palabras
+- `count` cuenta la cantidad de veces que aparece cada palabra en un tweet.
+- `spread` traspone la matriz de palabras
+- `select` selecciona columna
+
+
+```{r}
+tuits_df$screen_name <- as.factor(ifelse(tuits_df$screen_name == "MSFTMexico",
+                               tuits_df$screen_name, "Otro"))
+
+ejemplo_matriz<-tuits_df %>%
+    unnest_tokens(input = "texto2", output = "palabra") %>%
+    count(screen_name, status_id, palabra) %>%
+    spread(key = palabra, value = n) %>%
+    select(select=-status_id)
+
+contarPalabras<-tuits_df %>%
+    unnest_tokens(input = "texto2", output = "palabra") %>%
+    count(screen_name, palabra) %>%
+    spread(key = palabra, value = n)
+```
+
+Obtenemos un data frame donde cada palabra es un atributo.
+
+## Particionamos 
+
+
+```{r}
+# Separamos en train y test
+set.seed(2001)
+trainSeelct<-sample(x=1:nrow(ejemplo_matriz),nrow(ejemplo_matriz)*.7 )
+ejemplo_entrenamiento <- ejemplo_matriz[trainSeelct,]
+ejemplo_testeo <- ejemplo_matriz[-trainSeelct,]
+```
+
+
+## Modelamos
+
+```{r warning=FALSE}
+ejemplo_modelo <- naive_bayes(formula = screen_name 
+                              ~., data=ejemplo_entrenamiento)
+
+
+```
+
+## Predecimos
+
+```{r}
+ejemplo_prediccion <- predict(ejemplo_modelo, ejemplo_testeo)
+```
+
+
+## Matriz de confusión
+
+```{r}
+# Consultamos la matriz de confusión
+confusionMatrix(ejemplo_prediccion,
+                ejemplo_testeo[["screen_name"]])
+```
+
+# Otros pasos para hacer lo mismo
+
+Otra forma de hacer lo mismo es usando las funcionalidades del paquete tidyverse.
+
+
+```{r}
+# Cargamos las librer�as: Si tienen alg�n error revisen que las tengan instaladas. Eventualmente hay que instalarlas
+#library(tidyverse)
+library(tidytext)
+library(naivebayes)
+library(tm)
+library(caret)
+
+# Convertimos el archivo con tweets a un tibble porque as� lo demandan las funciones que usaremos despu�s
+tuits_df <- read.csv("tuits.csv", stringsAsFactors = F, fileEncoding = "latin1") %>% tbl_df
+
+# Generamos una funci�n para remover partes del texto que no me interesan por falta de valor sem�ntico
+quitar_url <- function(texto) {
+  gsub("\\<http\\S*\\>|[0-9]", " ", texto)
+}
+
+# Mostramos como queda el tibble 
+tuits_df %>%
+  unnest_tokens(input = "text", output = "palabra") %>%
+  count(screen_name, status_id, palabra) %>%
+  spread(key = palabra, value = n)
+
+# Creamos una funci�n para crear la matriz de palabras por documento
+crear_matriz <- function(tabla) {
+  tabla %>%
+    mutate(text = quitar_url(text)) %>%
+    unnest_tokens(input = "text", output = "palabra") %>%
+    count(screen_name, status_id, palabra) %>%
+    spread(key = palabra, value = n) %>%
+    select(-status_id)
+}
+
+# Generamos la matriz usando la funci�n que acabamos de generar
+ejemplo_matriz <-
+  tuits_df %>%
+  mutate(screen_name = ifelse(screen_name == "MSFTMexico", screen_name, "Otro"),
+         screen_name = as.factor(screen_name)) %>%
+  crear_matriz
+
+# Agrupamos los usuarios que no nos interesan bajo la categor�a "Otro"
+elegir_usuario <- function(nombres, usuario) {
+  as.factor(ifelse(nombres %in% usuario, nombres, "Otro"))}
+
+# Separamos en train y test
+set.seed(2001)
+ejemplo_entrenamiento <- sample_frac(ejemplo_matriz, .7)
+ejemplo_prueba <- setdiff(ejemplo_matriz, ejemplo_entrenamiento)
+
+# Generamos una función para crear las listas que vamos utilizar
+crear_sets <- function(tabla, prop = .7) {
+  lista_sets <- list()
+  lista_sets$train <- sample_frac(tabla, prop)
+  lista_sets$test  <- setdiff(tabla, lista_sets[["train"]])
+  lista_sets
+}
+
+# Creamos el modelo: Tener en cuenta que podríamos usar muchos (SVM, NB, etc.)
+ejemplo_modelo <- naive_bayes(formula = screen_name ~ .,  data = ejemplo_entrenamiento)
+ejemplo_prediccion <- predict(ejemplo_modelo, ejemplo_prueba)
+
+# Miramos que nos dió
+head(ejemplo_prediccion, 25)
+
+# Consultamos la matriz de confusión
+confusionMatrix(ejemplo_prediccion, ejemplo_prueba[["screen_name"]])
+```
+
+# Material extra
+
+## Analizar twets
+
+Acceder en forma gratuita a los twits de los últimos 7 días a través de la API de Twiter.
+
+La app solo permite descargar 15000 twits cada 15 minutos. Podemos crear una app desde el link 
+
+Para crear:
+https://developer.twitter.com/en/docs/authentication/guides/authentication-best-practices
+
+https://developer.twitter.com/en/docs/twitter-api
+
+Para administrar:
+https://developer.twitter.com/en/apps
+
+
+
+```{r}
+# Identificación y obtención de credenciales
+appname <- "....."
+key     <- "....."
+secret  <- "....."
+twitter_token <- create_token(app = appname, consumer_key = key,consumer_secret = secret)
+```
+
+
+
+
+
+```{r}
+#install.packages("rtweet")
+#install.packages("tidyverse")
+#install.packages("knitr")
+
+
+library(rtweet)
+#library(tidyverse)
+library(knitr)
+```
+
+Acá tenemos un token ya generado. Lo conseguí de la web. Se recomienda cuidado crear credenciales propios.
+
+```{r}
+api_key <- "WoiY9FWxrKbh5MOiHb2n6dgm3"
+api_secret_key <- "vJv1ttV45LPorCwHfXZZO9m4yetWZT3UonFKlNMF8bm251BccD"
+access_token <- "1282841290732900354-s5B4pOHWyHRgIIKGMFBy1Z0TxXLuvm"
+access_token_secret <- "Hjyd4yEH57Kebd8tAaoIwuSz7gt6t8f6krO8E7LmHtmNc"
+
+token <- rtweet::create_token(
+  app = "Prime Ministers Questions",
+  consumer_key = api_key,
+  consumer_secret = api_secret_key,
+  access_token = access_token,
+  access_secret = access_token_secret)
+
+rtweet::get_token()
+```
+
+## Buscar twits que contengan una palabra en particular
+
+```{r}
+#Tweeter tiene un limite de consultas por cada 15 minutos
+tweets<- search_tweets("futbol", #Buscamos twits con la palabra futbol
+                       n=100, #Limitamos a 100 la cantidad
+                       include_rts = F, #Incluye retwits
+                       retryonratelimit = F)
+
+#retryonratelimit=TRUE, cuando es TRUE se pone en pausa para seguir descargando mas alla del limite.
+
+View(tweets)
+```
+
+## Búsquedas de un usuario
+
+```{r}
+pmqs <- search_tweets("#PMQs", 
+                      n=100,
+                      include_rts = FALSE, 
+                      retryonratelimit = T )
+```
+
+
+## Búsquedas de un hashtag
+
+## Búsquedas avanzadas
+
+https://twitter.com/search-advanced?
+
+Podemos definir parámetros de la búsqueda y le damos al botón BUSCAR para que arme la query.
+
+Podemos buscar palabras, hashtags, usuarios, períodos, etc.
+
+```{r}
+consulta_avanzada <- "(#futbol) until:2023-05-06 since:2023-01-01"
+futbol<- search_tweets(consulta, n=100, 
+                       include_rts = F,
+                       retryonratelimit = F)
+```
+
+## Buscar twits por zona geográfica
+
+```{r}
+zona<- stream_tweets(c(-34,-60, -35, -57),#coordenadas de la región
+                     timeout = 30)#Segundos
+
+```
+
+
+
+## Otras funciones
+
+- `get_collections(usuario)` nos da información de un usuario
+- `lookup_users(usuarios_id)` nos dice los usuarios de determinados ids
+- `get_friends(usuario)` nos dice a quien sigue un usuario en particular
+- `get_followers(usuario)` nos da información de los seguidores de un usuario en particular
+

@@ -1,0 +1,291 @@
+---
+title: "Maquina soporte vectorial"
+output: html_notebook
+---
+
+La SVM busca un hiperplano que separe de forma óptima a los puntos de una clase de la de otra.
+
+En ese concepto de "separación óptima" es donde reside la característica fundamental de las SVM: este tipo de algoritmos buscan el hiperplano que tenga la máxima distancia (margen) con los puntos que estén más cerca de él mismo. Por eso también a veces se les conoce a las SVM como clasificadores de margen máximo. De esta forma, los puntos del vector que son etiquetados con una categoría estarán a un lado del hiperplano y los casos que se encuentren en la otra categoría estarán al otro lado.
+
+Los vectores de soporte son los puntos de datos más cercanos al hiperplano, los puntos de un conjunto de datos que, si se eliminan, alterarían la posición del hiperplano en división. Debido a esto, pueden considerarse los elementos críticos de un conjunto de datos, son los que nos ayudan a construir nuestra *SVM*.
+
+La geometría nos dice que un hiperplano es un subespacio de una dimensión menos que su espacio ambiental. Por ejemplo, un hiperplano de un espacio n-dimensional es un subconjunto plano con dimensión n-1. Por su naturaleza, separa el espacio en dos medios espacios.
+
+Veamos un ejemplo gráfico
+
+```{r}
+set.seed(6)
+df <- data.frame(x=c(rnorm(100, 1.5,.3), rnorm(100, 3, .3)),
+                 y=c(rnorm(100,1.5,.3), rnorm(100, 3,.3)),
+                 color=rep(c(1,2), each=100))
+plot(x=df$x, 
+     y=df$y,
+     col=df$color,
+     pch=rep(c(15,16), each=100),
+     xlab="valores x1",ylab="valores x2")
+```
+
+La idea es buscar un hiperplano que separe o discrimine los puntos de diferentes categorías. El hiperplano se define con la ecuación:
+
+$$\beta_0 + \beta_1x_1 + \beta_2x_2+....+ \beta_nx_n = 0$$
+
+Todo punto que cumple con la condición pertenece al hiperplano de separación.
+
+Si un punto determinado la ecuación da como resultado mayor a cero, entonces pertenece a una categoría y si es menor a cero pertenece a la otra.
+
+Existen infinitas rectas que clasifican perfectamente el problema planteado, por ejemplo:
+
+Supongamos la ecuación:
+
+$$-4 + x_1 + 0.8*x_2= 0$$
+
+```{r}
+plot(x=df$x, 
+     y=df$y,
+     col=df$color,
+     pch=rep(c(15,16), each=100),
+     xlab="valores x1",ylab="valores x2")
+
+#-B0/B1; -B1/B2
+abline((4)/(0.8), (-1)/(0.8), col = "blue")
+#cuando X1=0 => x2 = 4/0.8
+#cuando x2=0 => x1 = 4/1
+#La pendiente de la recta es X2 = 4 - 1/0.8*X1
+
+```
+
+valuemos el punto (x1=3,x2=3)
+
+```{r}
+-4 + 1*3 + 0.8*3
+```
+
+valuemos el punto (x1=2,x2=2)
+
+```{r}
+-4 + 1*2 + 0.8*2
+```
+
+Si la ecuación en negativa el punto se encuentra por debajo de la recta y se lo clasifica como un punto negro
+
+Si la ecuación en positiva el punto se encuentra por encima de la recta y se lo clasifica como un punto rojo.
+
+## La función `svm()`
+
+En el paquete `e1071` contamos con la función `svm` para ejecutar un modelo de Máquina vectorial. Los argumentos más importantes de esta función son:
+
+-   `scale` es un valor lógico mediante el cual le indicamos si necesitamos escalar los datos
+-   `kernel` es una transformación matemática que permite aumentar la dimensionalidad. Puede tomar los valores c("linear", "polynomial","radial", "sigmoid")
+-   `type` indicamos si queremos realizar el modelo para una clasificación o una regresión ("eps-regression")
+-   `cost` es el costo aceptado o costo de violación de restricciones
+-   `degree` parámetro necesario cuando utilizamos un kernel polinómico (default: 3)
+-   `coef0` parámetro necesario cuando utilizamos un kernel polinómico (default: 0)
+-   `gamma` parámetro que se necesita cuando se especifica un kernel no lineal (default: 1/(data dimensión))
+
+### Modelo SVM
+
+```{r}
+#install.packages("e1071")
+library(e1071)
+
+m <- svm(as.factor(color) ~ x + y,
+         data = df, cost=1,
+         kernel = "linear", scale=FALSE)
+
+cf <- coef(m)
+
+plot(y ~ x, data = df, col = df$color, pch=rep(c(15,16), each=10))
+
+abline(-cf[1]/cf[3], -cf[2]/cf[3], col = "red")
+
+abline(-(cf[1] + m$cost)/cf[3], -cf[2]/cf[3], col = "blue")
+abline(-(cf[1] - m$cost)/cf[3], -cf[2]/cf[3], col = "blue")
+points(m$SV, pch = 5, cex = 2)
+```
+
+## Tuneo del modelo
+
+### ¿Cómo elegir el valor de costo óptimo?
+
+El paquete también trae una función que se llama `tune()` la cual nos permite ofrecerle valores al modelo y que elija el valor óptimo.
+
+```{r}
+set.seed(1)
+m.tune <- tune("svm", as.factor(color) ~ x + y, data = df,
+               kernel = 'linear',
+               ranges = list(cost = c(0.001, 0.01, 0.1, 1, 2),
+                             scale=c(TRUE, FALSE)))
+summary(m.tune)
+```
+
+```{r}
+library(e1071)
+
+m <- svm(as.factor(color) ~ x + y, data = df, 
+         kernel = "linear", scale=FALSE, cost=0.1)
+
+cf <- coef(m)
+
+plot(y ~ x, data = df, col = df$color, pch=rep(c(15,16), each=10))
+
+abline(-cf[1]/cf[3], -cf[2]/cf[3], col = "red")
+
+abline(-(cf[1] + m$cost)/cf[3], -cf[2]/cf[3], col = "blue")
+abline(-(cf[1] - m$cost)/cf[3], -cf[2]/cf[3], col = "blue")
+points(m$SV, pch = 5, cex = 2)
+```
+
+# Los Kernels
+
+Un kernel es una transformación matemática entre dos vectores y se utilizan para generar una nueva dimensión (variable).
+
+## Kernel radial
+
+$$K(\textbf{u}, \textbf{v}) = exp(- \gamma |\textbf{u} - \textbf{v}|^2)$$
+
+```{r}
+set.seed(2)
+dfRadial <-  data.frame(x=c(rnorm(100, 0,.2), 3*rnorm(100, 0, .5)),
+                 y=c(rnorm(100,0,.2), 3*rnorm(100, 0,.5)),
+                 color=rep(c(1,2), each=100))
+plot(x=dfRadial$x, 
+     y=dfRadial$y,
+     col=dfRadial$color,
+     pch=rep(c(15,16), each=100),
+     xlab="valores x1",ylab="valores x2")
+```
+
+## Tuneo de los Kernels
+
+```{r}
+set.seed(1)
+m.tune <- tune(svm, as.factor(color)~., data=dfRadial, ranges=list(kernel=c("linear", "polynomial","radial", "sigmoid"), cost=c(.1,.2,.5,1,2)))
+summary(m.tune)
+```
+
+```{r}
+m <- svm(as.factor(color) ~ x + y, data = dfRadial, 
+         kernel = "radial", scale=FALSE, cost=2, probability=T)
+
+plot(y ~ x, data = dfRadial, col = dfRadial$color, pch=rep(c(15,16), each=10))
+
+points(m$SV, pch = 5, cex = 2)
+```
+
+```{r}
+plot(m, data=dfRadial)
+```
+
+## Kernel polinómico
+
+$$K(\textbf{u}, \textbf{v}) = (\gamma *\textbf{u} \textbf{v} + coef0)^{degree}$$
+
+## Kernel sigmoid
+
+$$K(\textbf{u}, \textbf{v}) = tanh(\gamma *\textbf{u} \textbf{v} + coef0)$$
+
+# Predicciones
+
+> predict(object, newdata, decision.values = FALSE,probability = FALSE)
+
+```{r}
+predicciones <- predict(object=m, newdata=dfRadial, probability = TRUE, decision.values = TRUE)
+probabilidades <- attr(predicciones, "probabilities")
+clase <- attr(predicciones, "decision.values")
+```
+
+# Caso de estudio
+
+Vamos a emplear SVM para clasificar el nivel de riesgo de un cliente.
+
+```{r warning=FALSE}
+#install.packages("liver")
+library(liver)
+data( risk ) 
+```
+
+## Escalado de las variables continuas
+
+Dado que las variables continuas presentan diferencias en la escala, resulta conveniente escalarlas.
+
+```{r}
+escalado <- function(x){
+  escalado <- (x - min(x))/(max(x) - min(x))
+}
+
+risk$age <- escalado(risk$age)
+risk$income <- escalado(risk$income)
+risk$nr.loans <- escalado(risk$nr.loans)
+```
+
+## Tuneo el kernel
+
+```{r}
+set.seed(1)
+m.tune <- tune(svm, risk~., data=risk, 
+               ranges=list(kernel=c("linear", "polynomial","radial", "sigmoid"), 
+                           cost=c(.1,.2,.5,1,2,4,5)))
+summary(m.tune)
+```
+
+## Particiono en trining y testing
+
+```{r}
+#selecciono el 60% para entrenar
+seleccion <- sample(1:nrow(risk), nrow(risk)*.6)
+```
+
+```{r}
+training <- risk[seleccion,]
+testing <- risk[-seleccion,]
+```
+
+```{r}
+modelo1 <- svm(risk ~ ., data = training, 
+               kernel="radial", cost=2,
+              probability=T,
+               scale=FALSE)
+modelo1 
+```
+
+```{r}
+# realizamos la prediccion con el modelo en el training
+predicciones.m1<-predict(modelo1,training)
+    
+# Matriz de confusión 
+table(predicciones.m1,training$risk)
+```
+
+```{r}
+# realizamos la predicción con el modelo en el testing
+predicciones.m1<-predict(modelo1,testing)
+    
+# Matriz de confusión 
+table(predicciones.m1,testing$risk)
+```
+
+## Probabilidades
+
+```{r}
+predicciones <- predict(object=modelo1, 
+                        newdata=testing, 
+                        probability = TRUE, #poner el argumento en el modelo
+                        decision.values = TRUE)
+probabilidades <- attr(predicciones, "probabilities")
+clase <- attr(predicciones, "decision.values")
+```
+
+# SVM para regresiones
+
+```{r}
+modeloReg <- svm(nr.loans ~ age+income, data = training, 
+               kernel="radial", cost=2,
+               scale=FALSE,
+               type=  "eps-regression")
+modeloReg 
+```
+
+```{r}
+prediccionesReg <- predict(object=modeloReg, 
+                        newdata=testing)
+```
